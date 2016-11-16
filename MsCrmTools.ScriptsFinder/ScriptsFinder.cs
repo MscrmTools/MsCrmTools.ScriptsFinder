@@ -6,10 +6,11 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using XrmToolBox.Extensibility;
+using XrmToolBox.Extensibility.Interfaces;
 
 namespace MsCrmTools.ScriptsFinder
 {
-    public partial class ScriptsFinder : PluginControlBase
+    public partial class ScriptsFinder : PluginControlBase, IGitHubPlugin, IHelpPlugin
     {
         #region Constructor
 
@@ -141,5 +142,9 @@ namespace MsCrmTools.ScriptsFinder
         {
             ExecuteMethod(FindScripts);
         }
+
+        public string RepositoryName { get { return "MsCrmTools.ScriptsFinder"; } }
+        public string UserName { get { return "MscrmTools"; } }
+        public string HelpUrl { get { return "https://github.com/MscrmTools/MsCrmTools.ScriptsFinder/wiki"; } }
     }
 }
