@@ -48,6 +48,8 @@ namespace MsCrmTools.ScriptsFinder
                     LoadCustomControls(emd);
                 }
             }
+
+            LoadRibbonCustomRule();
         }
 
         private EntityMetadataCollection GetEntities()
@@ -166,6 +168,71 @@ namespace MsCrmTools.ScriptsFinder
                 }
             }
         }
+
+        private void LoadRibbonCustomRule()
+        {
+            var rules = service.RetrieveMultiple(new QueryExpression("ribbonrule")
+            {
+                ColumnSet = new ColumnSet(true),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("ruledefinition", ConditionOperator.Like, "%Library=\"$webresource:%"),
+                    }
+                }
+            });
+
+            foreach (var rule in rules.Entities)
+            {
+                var commandDoc = new XmlDocument();
+                commandDoc.LoadXml(rule.GetAttributeValue<string>("ruledefinition"));
+
+                var customRulesNode = commandDoc.SelectNodes("//CustomRule");
+                if (customRulesNode == null)
+                {
+                    return;
+                }
+
+                foreach (XmlNode customRuleNode in customRulesNode)
+                {
+                    var libraryNode = customRuleNode.Attributes?["Library"];
+                    if (libraryNode == null)
+                    {
+                        continue;
+                    }
+
+                    var libraryName = libraryNode.Value;
+
+                    if (libraryName.Split(':').Length == 1)
+                        continue;
+
+                    var script = new Script();
+                    script.EntityLogicalName = rule.GetAttributeValue<string>("entity");
+                    script.EntityName = emds.FirstOrDefault(e => e.LogicalName == script.EntityLogicalName)?.DisplayName.UserLocalizedLabel.Label??"Application Ribbon";
+                    script.ScriptLocation = libraryName.Split(':')[1];
+                    script.MethodCalled = customRuleNode.Attributes["FunctionName"].Value;
+                    script.Event = "";
+                    script.Attribute = "";
+                    script.AttributeLogicalName = "";
+                    script.Name = string.Empty;
+                    script.Type = "Ribbon Custom Rule";
+
+                    var parameters = new List<string>();
+
+                    foreach (XmlNode parameterNode in customRuleNode.ChildNodes)
+                    {
+                        // ReSharper disable once PossibleNullReferenceException
+                        parameters.Add(string.Format("{0}:{1}", parameterNode.Name, parameterNode.Attributes["Value"].Value));
+                    }
+
+                    script.Arguments = string.Join(" / ", parameters);
+
+                    Scripts.Add(script);
+                }
+            }
+        }
+
 
         private void LoadScripts(EntityMetadata emd)
         {
