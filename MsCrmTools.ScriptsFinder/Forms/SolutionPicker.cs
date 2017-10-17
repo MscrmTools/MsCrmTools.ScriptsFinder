@@ -63,7 +63,6 @@ namespace MsCrmTools.ScriptsFinder.Forms
                 qe.Distinct = true;
                 qe.ColumnSet = new ColumnSet(true);
                 qe.Criteria = new FilterExpression();
-                qe.Criteria.AddCondition(new ConditionExpression("ismanaged", ConditionOperator.Equal, false));
                 qe.Criteria.AddCondition(new ConditionExpression("isvisible", ConditionOperator.Equal, true));
                 qe.Criteria.AddCondition(new ConditionExpression("uniquename", ConditionOperator.NotEqual, "Default"));
 

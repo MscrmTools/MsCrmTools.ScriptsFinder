@@ -40,6 +40,9 @@ namespace MsCrmTools.ScriptsFinder
                 }
                 else
                 {
+                    tsddFindScripts.Enabled = true;
+                    tsbExportToCsv.Enabled = true;
+
                     return;
                 }
             }
