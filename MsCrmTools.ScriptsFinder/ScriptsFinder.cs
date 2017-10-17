@@ -5,6 +5,8 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Microsoft.Xrm.Sdk;
+using MsCrmTools.ScriptsFinder.Forms;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 
@@ -21,30 +23,47 @@ namespace MsCrmTools.ScriptsFinder
 
         #endregion Constructor
 
-        public void FindScripts()
+        public void FindScripts(bool allEntities)
         {
             lvScripts.Items.Clear();
-            tsbMainFindScripts.Enabled = false;
+            tsddFindScripts.Enabled = false;
             tsbExportToCsv.Enabled = false;
+
+            var solutionList = new List<Entity>();
+
+            if (!allEntities)
+            {
+                var dialog = new SolutionPicker(Service);
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    solutionList = dialog.SelectedSolution;
+                }
+                else
+                {
+                    return;
+                }
+            }
 
             WorkAsync(new WorkAsyncInfo
             {
                 Message = "Loading scripts (this can take a while...)",
-                AsyncArgument = null,
+                AsyncArgument = solutionList,
                 Work = (bw, e) =>
                 {
                     var lScripts = new List<ListViewItem>();
+                    var solutions = (List<Entity>)e.Argument;
 
                     var sManager = new ScriptsManager(Service, bw);
-                    sManager.Find(new Version(ConnectionDetail.OrganizationVersion));
+                    sManager.Find(solutions, new Version(ConnectionDetail.OrganizationVersion));
 
                     foreach (var script in sManager.Scripts)
                     {
-                        
-                        var item = new ListViewItem(script.Type) {Tag = script};
+                        var item = new ListViewItem(script.Type) { Tag = script };
                         item.SubItems.Add(script.EntityName);
                         item.SubItems.Add(script.EntityLogicalName);
-                        item.SubItems.Add(script.Name);
+                        item.SubItems.Add(script.FormName);
+                        item.SubItems.Add(script.FormType);
+                        item.SubItems.Add(script.FormState);
                         item.SubItems.Add(script.Event);
                         item.SubItems.Add(script.Attribute);
                         item.SubItems.Add(script.AttributeLogicalName);
@@ -66,7 +85,7 @@ namespace MsCrmTools.ScriptsFinder
                 PostWorkCallBack = e =>
                 {
                     lvScripts.Items.AddRange(((List<ListViewItem>)e.Result).ToArray());
-                    tsbMainFindScripts.Enabled = true;
+                    tsddFindScripts.Enabled = true;
                     tsbExportToCsv.Enabled = true;
                 },
                 ProgressChanged = e =>
@@ -115,13 +134,13 @@ namespace MsCrmTools.ScriptsFinder
                             script.Type,
                             script.EntityName,
                             script.EntityLogicalName,
-                            script.Name,
+                            script.FormState,
                             script.Event,
                             script.Attribute,
                             script.AttributeLogicalName,
                             script.ScriptLocation,
                             script.MethodCalled,
-                            script.Arguments?.Replace(","," "),
+                            script.Arguments?.Replace(",", " "),
                             script.IsActive,
                             script.PassExecutionContext,
                             Environment.NewLine));
@@ -138,13 +157,18 @@ namespace MsCrmTools.ScriptsFinder
             }
         }
 
-        private void TsbMainFindScriptsClick(object sender, EventArgs e)
-        {
-            ExecuteMethod(FindScripts);
-        }
-
         public string RepositoryName { get { return "MsCrmTools.ScriptsFinder"; } }
         public string UserName { get { return "MscrmTools"; } }
         public string HelpUrl { get { return "https://github.com/MscrmTools/MsCrmTools.ScriptsFinder/wiki"; } }
+
+        private void forAllEntitiesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteMethod(FindScripts, true);
+        }
+
+        private void forEntitiesInSelectedSolutionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteMethod(FindScripts, false);
+        }
     }
 }

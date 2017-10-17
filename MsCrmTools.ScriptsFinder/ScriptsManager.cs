@@ -16,7 +16,7 @@ namespace MsCrmTools.ScriptsFinder
     {
         private readonly IOrganizationService service;
         private readonly BackgroundWorker worker;
-        private EntityMetadataCollection emds;
+        private List<EntityMetadata> emds;
         private int userLcid;
 
         public ScriptsManager(IOrganizationService service, BackgroundWorker worker)
@@ -26,15 +26,15 @@ namespace MsCrmTools.ScriptsFinder
             Scripts = new List<Script>();
         }
 
-        public List<Script> Scripts { get; private set; }
+        public List<Script> Scripts { get; }
 
-        public void Find(Version crmVersion)
+        public void Find(List<Entity> solutions, Version crmVersion)
         {
             worker.ReportProgress(0, "Loading User language...");
             GetCurrentUserLcid();
 
             worker.ReportProgress(0, "Loading Entities metadata...");
-            emds = GetEntities();
+            emds = GetEntities(solutions);
 
             worker.ReportProgress(0, "Loading Scripts...");
             foreach (var emd in emds.Where(x => x.DisplayName.UserLocalizedLabel != null))
@@ -43,7 +43,7 @@ namespace MsCrmTools.ScriptsFinder
                 LoadRibbonCommands(emd);
 
                 // Grid events are only available since CRM 8.2
-                if (crmVersion >= new Version(8,2,0,0))
+                if (crmVersion >= new Version(8, 2, 0, 0))
                 {
                     LoadCustomControls(emd);
                 }
@@ -52,43 +52,105 @@ namespace MsCrmTools.ScriptsFinder
             LoadRibbonCustomRule();
         }
 
-        private EntityMetadataCollection GetEntities()
+        private List<EntityMetadata> GetEntities(List<Entity> solutions)
         {
-            EntityQueryExpression entityQueryExpression = new EntityQueryExpression()
+            if (solutions.Count > 0)
             {
-                Criteria = new MetadataFilterExpression(LogicalOperator.Or)
+                var components = service.RetrieveMultiple(new QueryExpression("solutioncomponent")
                 {
-                    Conditions =
+                    ColumnSet = new ColumnSet("objectid"),
+                    NoLock = true,
+                    Criteria = new FilterExpression
                     {
-                        new MetadataConditionExpression("IsCustomizable", MetadataConditionOperator.Equals, true),
-                        new MetadataConditionExpression("IsManaged", MetadataConditionOperator.Equals, false),
+                        Conditions =
+                        {
+                            new ConditionExpression("solutionid", ConditionOperator.In,
+                                solutions.Select(s => s.Id).ToArray()),
+                            new ConditionExpression("componenttype", ConditionOperator.Equal, 1)
+                        }
                     }
-                },
-                Properties = new MetadataPropertiesExpression
+                }).Entities;
+
+                var list = components.Select(component => component.GetAttributeValue<Guid>("objectid"))
+                    .ToList();
+
+                if (list.Count > 0)
                 {
-                    AllProperties = false,
-                    PropertyNames = { "DisplayName", "LogicalName", "Attributes", "ObjectTypeCode" }
-                },
-                AttributeQuery = new AttributeQueryExpression
+                    EntityQueryExpression entityQueryExpression = new EntityQueryExpression
+                    {
+                        Criteria = new MetadataFilterExpression(LogicalOperator.Or),
+                        Properties = new MetadataPropertiesExpression
+                        {
+                            AllProperties = false,
+                            PropertyNames = { "DisplayName", "LogicalName", "Attributes", "ObjectTypeCode" }
+                        },
+                        AttributeQuery = new AttributeQueryExpression
+                        {
+                            // Récupération de l'attribut spécifié
+                            Properties = new MetadataPropertiesExpression
+                            {
+                                AllProperties = false,
+                                PropertyNames = { "DisplayName", "LogicalName" }
+                            }
+                        }
+                    };
+
+                    list.ForEach(id =>
+                    {
+                        entityQueryExpression.Criteria.Conditions.Add(new MetadataConditionExpression("MetadataId", MetadataConditionOperator.Equals, id));
+                    });
+
+                    RetrieveMetadataChangesRequest retrieveMetadataChangesRequest = new RetrieveMetadataChangesRequest
+                    {
+                        Query = entityQueryExpression,
+                        ClientVersionStamp = null
+                    };
+
+                    var response = (RetrieveMetadataChangesResponse)service.Execute(retrieveMetadataChangesRequest);
+
+                    return response.EntityMetadata.ToList();
+                }
+
+                return new List<EntityMetadata>();
+            }
+            else
+            {
+                EntityQueryExpression entityQueryExpression = new EntityQueryExpression
                 {
-                    // Récupération de l'attribut spécifié
+                    Criteria = new MetadataFilterExpression(LogicalOperator.Or)
+                    {
+                        Conditions =
+                        {
+                            new MetadataConditionExpression("IsCustomizable", MetadataConditionOperator.Equals, true),
+                            new MetadataConditionExpression("IsManaged", MetadataConditionOperator.Equals, false),
+                        }
+                    },
                     Properties = new MetadataPropertiesExpression
                     {
                         AllProperties = false,
-                        PropertyNames = { "DisplayName", "LogicalName" }
+                        PropertyNames = { "DisplayName", "LogicalName", "Attributes", "ObjectTypeCode" }
+                    },
+                    AttributeQuery = new AttributeQueryExpression
+                    {
+                        // Récupération de l'attribut spécifié
+                        Properties = new MetadataPropertiesExpression
+                        {
+                            AllProperties = false,
+                            PropertyNames = { "DisplayName", "LogicalName" }
+                        }
                     }
-                },
-            };
+                };
 
-            RetrieveMetadataChangesRequest retrieveMetadataChangesRequest = new RetrieveMetadataChangesRequest
-            {
-                Query = entityQueryExpression,
-                ClientVersionStamp = null
-            };
+                RetrieveMetadataChangesRequest retrieveMetadataChangesRequest = new RetrieveMetadataChangesRequest
+                {
+                    Query = entityQueryExpression,
+                    ClientVersionStamp = null
+                };
 
-            var response = (RetrieveMetadataChangesResponse)service.Execute(retrieveMetadataChangesRequest);
+                var response = (RetrieveMetadataChangesResponse)service.Execute(retrieveMetadataChangesRequest);
 
-            return response.EntityMetadata;
+                return response.EntityMetadata.ToList();
+            }
         }
 
         private void GetCurrentUserLcid()
@@ -151,7 +213,7 @@ namespace MsCrmTools.ScriptsFinder
                     script.Event = "";
                     script.Attribute = "";
                     script.AttributeLogicalName = "";
-                    script.Name = string.Empty;
+                    script.FormState = string.Empty;
                     script.Type = "Ribbon Command";
 
                     var parameters = new List<string>();
@@ -159,10 +221,15 @@ namespace MsCrmTools.ScriptsFinder
                     foreach (XmlNode parameterNode in actionNode.ChildNodes)
                     {
                         // ReSharper disable once PossibleNullReferenceException
-                       parameters.Add(string.Format("{0}:{1}", parameterNode.Name, parameterNode.Attributes["Value"].Value));
+                        parameters.Add(string.Format("{0}:{1}", parameterNode.Name, parameterNode.Attributes["Value"].Value));
                     }
 
                     script.Arguments = string.Join(" / ", parameters);
+
+                    if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                    {
+                        continue;
+                    }
 
                     Scripts.Add(script);
                 }
@@ -209,13 +276,13 @@ namespace MsCrmTools.ScriptsFinder
 
                     var script = new Script();
                     script.EntityLogicalName = rule.GetAttributeValue<string>("entity");
-                    script.EntityName = emds.FirstOrDefault(e => e.LogicalName == script.EntityLogicalName)?.DisplayName.UserLocalizedLabel.Label??"Application Ribbon";
+                    script.EntityName = emds.FirstOrDefault(e => e.LogicalName == script.EntityLogicalName)?.DisplayName.UserLocalizedLabel.Label ?? "Application Ribbon";
                     script.ScriptLocation = libraryName.Split(':')[1];
                     script.MethodCalled = customRuleNode.Attributes["FunctionName"].Value;
                     script.Event = "";
                     script.Attribute = "";
                     script.AttributeLogicalName = "";
-                    script.Name = string.Empty;
+                    script.FormState = string.Empty;
                     script.Type = "Ribbon Custom Rule";
 
                     var parameters = new List<string>();
@@ -228,11 +295,15 @@ namespace MsCrmTools.ScriptsFinder
 
                     script.Arguments = string.Join(" / ", parameters);
 
+                    if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                    {
+                        continue;
+                    }
+
                     Scripts.Add(script);
                 }
             }
         }
-
 
         private void LoadScripts(EntityMetadata emd)
         {
@@ -264,6 +335,11 @@ namespace MsCrmTools.ScriptsFinder
                         script.Arguments = handlerNode.Attributes["parameters"] != null ? handlerNode.Attributes["parameters"].Value : "";
                         script.Type = "Form event";
 
+                        if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                        {
+                            continue;
+                        }
+
                         if (eventName == "onchange")
                         {
                             var amd = emd.Attributes.FirstOrDefault(x => eventNode.Attributes != null && x.LogicalName == eventNode.Attributes["attribute"].Value);
@@ -288,7 +364,7 @@ namespace MsCrmTools.ScriptsFinder
                                 XmlNode node = doc.SelectSingleNode("//control[@id='" + eventNode.Attributes["control"].Value + "']");
                                 XmlNode targetEntityNode = node.SelectSingleNode("parameters/TargetEntityType");
 
-                                amd = emds.First(e=>e.LogicalName == targetEntityNode.InnerText).Attributes.First(x => x.LogicalName == eventNode.Attributes["attribute"].Value);
+                                amd = emds.First(e => e.LogicalName == targetEntityNode.InnerText).Attributes.First(x => x.LogicalName == eventNode.Attributes["attribute"].Value);
                                 var displayName = amd.DisplayName != null && amd.DisplayName.UserLocalizedLabel != null
                                    ? amd.DisplayName.UserLocalizedLabel.Label
                                    : "(" + amd.LogicalName + ")";
@@ -348,8 +424,15 @@ namespace MsCrmTools.ScriptsFinder
                             script.Attribute = "";
                             script.AttributeLogicalName = "";
                         }
-                        script.Name = form["name"].ToString();
+                        script.FormName = form["name"].ToString();
+                        script.FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate").Value == 0
+                            ? "Inactive"
+                            : "Active";
 
+                        var type = form.GetAttributeValue<OptionSetValue>("type").Value;
+                        script.FormType = type == 2
+                            ? "Main"
+                            : (type == 7 ? "Quick Create" : "value: " + type);
                         Scripts.Add(script);
                     }
                 }
@@ -364,8 +447,22 @@ namespace MsCrmTools.ScriptsFinder
                     script.Event = string.Empty;
                     script.Attribute = string.Empty;
                     script.AttributeLogicalName = string.Empty;
-                    script.Name = form["name"].ToString();
                     script.Type = "Form Library";
+
+                    script.FormName = form["name"].ToString();
+                    script.FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate").Value == 0
+                        ? "Inactive"
+                        : "Active";
+
+                    var type = form.GetAttributeValue<OptionSetValue>("type").Value;
+                    script.FormType = type == 2
+                        ? "Main"
+                        : (type == 7 ? "Quick Create" : "value: " + type);
+
+                    if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                    {
+                        continue;
+                    }
 
                     Scripts.Add(script);
                 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace MsCrmTools.ScriptsFinder
 {
@@ -14,9 +15,11 @@ namespace MsCrmTools.ScriptsFinder
         public bool HasProblem { get; set; }
         public bool? IsActive { get; set; }
         public string MethodCalled { get; set; }
-        public string Name { get; set; }
         public string ScriptLocation { get; set; }
         public string Type { get; set; }
         public bool? PassExecutionContext { get; set; }
+        public string FormType { get; internal set; }
+        public string FormName { get; set; }
+        public string FormState { get; set; }
     }
 }
