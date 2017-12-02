@@ -125,7 +125,7 @@ namespace MsCrmTools.ScriptsFinder
                     fs.Write(preamble, 0, preamble.Length);
 
                     var header = Encoding.UTF8.GetBytes(
-                        "Type,Entity Display Name,Entity Logical Name,Form name,Event,Control,Control Logical Name,Script Location,Method Called,Parameters,Enabled,Pass Execution context" +
+                        "Type,Entity Display Name,Entity Logical Name,Form name,Form Type,Form State,Event,Control,Control Logical Name,Script Location,Method Called,Parameters,Enabled,Pass Execution context" +
                         Environment.NewLine);
                     fs.Write(header, 0, header.Length);
 
@@ -133,10 +133,12 @@ namespace MsCrmTools.ScriptsFinder
                     {
                         var script = (Script)item.Tag;
 
-                        var line = Encoding.UTF8.GetBytes(string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}{12}",
+                        var line = Encoding.UTF8.GetBytes(string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}{14}",
                             script.Type,
                             script.EntityName,
                             script.EntityLogicalName,
+                            script.FormName,
+                            script.FormType,
                             script.FormState,
                             script.Event,
                             script.Attribute,
