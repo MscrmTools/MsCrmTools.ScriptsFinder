@@ -425,9 +425,13 @@ namespace MsCrmTools.ScriptsFinder
                             script.AttributeLogicalName = "";
                         }
                         script.FormName = form["name"].ToString();
-                        script.FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate").Value == 0
+                        script.FormState = "Active";
+                        if (form.Contains("formactivationstate"))
+                        {
+                            script.FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate").Value == 0
                             ? "Inactive"
                             : "Active";
+                        }
 
                         var type = form.GetAttributeValue<OptionSetValue>("type").Value;
                         script.FormType = type == 2
