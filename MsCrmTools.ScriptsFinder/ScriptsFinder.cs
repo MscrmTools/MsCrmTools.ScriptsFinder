@@ -87,9 +87,15 @@ namespace MsCrmTools.ScriptsFinder
                 },
                 PostWorkCallBack = e =>
                 {
-                    lvScripts.Items.AddRange(((List<ListViewItem>)e.Result).ToArray());
                     tsddFindScripts.Enabled = true;
                     tsbExportToCsv.Enabled = true;
+
+                    if (e.Error != null)
+                    {
+                        MessageBox.Show(this, e.Error.Message, @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    lvScripts.Items.AddRange(((List<ListViewItem>)e.Result).ToArray());
                 },
                 ProgressChanged = e =>
                 {
