@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace MsCrmTools.ScriptsFinder
@@ -70,10 +71,10 @@ namespace MsCrmTools.ScriptsFinder
         {
             if (innerOrder == SortOrder.Ascending)
             {
-                return String.CompareOrdinal(x.SubItems[col].Text, y.SubItems[col].Text);
+                return String.Compare(x.SubItems[col].Text, y.SubItems[col].Text, CultureInfo.InvariantCulture, CompareOptions.OrdinalIgnoreCase);
             }
 
-            return String.CompareOrdinal(y.SubItems[col].Text, x.SubItems[col].Text);
+            return String.Compare(y.SubItems[col].Text, x.SubItems[col].Text, CultureInfo.InvariantCulture, CompareOptions.OrdinalIgnoreCase);
         }
 
         #endregion Methods
