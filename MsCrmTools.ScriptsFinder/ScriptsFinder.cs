@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Microsoft.Xrm.Sdk;
+using MsCrmTools.ScriptsFinder.Forms;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
-using Microsoft.Xrm.Sdk;
-using MsCrmTools.ScriptsFinder.Forms;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 
@@ -14,6 +16,9 @@ namespace MsCrmTools.ScriptsFinder
 {
     public partial class ScriptsFinder : PluginControlBase, IGitHubPlugin, IHelpPlugin
     {
+        private Thread filterThread;
+        private List<ListViewItem> lScripts = new List<ListViewItem>();
+
         #region Constructor
 
         public ScriptsFinder()
@@ -22,6 +27,12 @@ namespace MsCrmTools.ScriptsFinder
         }
 
         #endregion Constructor
+
+        public string HelpUrl => "https://github.com/MscrmTools/MsCrmTools.ScriptsFinder/wiki";
+
+        public string RepositoryName => "MsCrmTools.ScriptsFinder";
+
+        public string UserName => "MscrmTools";
 
         public void FindScripts(bool allEntities)
         {
@@ -53,7 +64,7 @@ namespace MsCrmTools.ScriptsFinder
                 AsyncArgument = solutionList,
                 Work = (bw, e) =>
                 {
-                    var lScripts = new List<ListViewItem>();
+                    lScripts = new List<ListViewItem>();
                     var solutions = (List<Entity>)e.Argument;
 
                     var sManager = new ScriptsManager(Service, bw);
@@ -104,10 +115,114 @@ namespace MsCrmTools.ScriptsFinder
             });
         }
 
+        private void cbbFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Filter();
+        }
+
+        private void Filter()
+        {
+            Thread.Sleep(500);
+
+            Invoke(new Action(() =>
+            {
+                lvScripts.Items.Clear();
+
+                var filtered = lScripts.Where(l =>
+                {
+                    var s = (Script)l.Tag;
+
+                    return matchNullOrComboboxValue(cbbFilterEvent, s.Event)
+                           && matchNullOrComboboxValue(cbbFilterEnabled,
+                               s.IsActive.HasValue ? s.IsActive.Value ? "Active" : "Inactive" : "(Not specified)")
+                           && matchNullOrComboboxValue(cbbFilterFormState, s.FormState)
+                           && matchNullOrComboboxValue(cbbFilterFormType, s.FormType)
+                           && matchNullOrComboboxValue(cbbFilterPassParameters,
+                               s.PassExecutionContext.HasValue
+                                   ? s.PassExecutionContext.Value ? "True" : "False"
+                                   : "(Not specified)")
+                           && matchNullOrComboboxValue(cbbFilterType, s.Type)
+                           && matchEmptyOrTextBoxValue(txtFilterControl, s.Attribute)
+                           && matchEmptyOrTextBoxValue(txtFilterControlLogicalName, s.AttributeLogicalName)
+                           && matchEmptyOrTextBoxValue(txtFilterEntity, s.EntityName)
+                           && matchEmptyOrTextBoxValue(txtFilterEntityLogicalName, s.EntityLogicalName)
+                           && matchEmptyOrTextBoxValue(txtFilterFile, s.ScriptLocation)
+                           && matchEmptyOrTextBoxValue(txtFilterFormName, s.FormName)
+                           && matchEmptyOrTextBoxValue(txtFilterMethod, s.MethodCalled)
+                           && matchEmptyOrTextBoxValue(txtFilterParameters, s.Arguments);
+                });
+
+                lvScripts.Items.AddRange(filtered.ToArray());
+            }));
+        }
+
+        private void forAllEntitiesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteMethod(FindScripts, true);
+        }
+
+        private void forEntitiesInSelectedSolutionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteMethod(FindScripts, false);
+        }
+
         private void LvScriptsColumnClick(object sender, ColumnClickEventArgs e)
         {
             lvScripts.Sorting = lvScripts.Sorting == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
             lvScripts.ListViewItemSorter = new ListViewItemComparer(e.Column, lvScripts.Sorting);
+        }
+
+        private bool matchEmptyOrTextBoxValue(TextBox txt, string value)
+        {
+            return string.IsNullOrEmpty(txt.Text) ||
+              value.ToLower().Contains(txt.Text.ToLower());
+        }
+
+        private bool matchNullOrComboboxValue(ComboBox cbb, string value)
+        {
+            return cbb.SelectedItem == null ||
+                   cbb.SelectedItem?.ToString().ToLower() == value?.ToLower() ||
+                   cbb.SelectedIndex == cbb.Items.Count - 1 && string.IsNullOrEmpty(value);
+        }
+
+        private void tsbClearFilter_Click(object sender, EventArgs e)
+        {
+            foreach (var ctrl in Controls.OfType<ComboBox>())
+            {
+                ctrl.SelectedIndexChanged -= cbbFilter_SelectedIndexChanged;
+            }
+
+            foreach (var ctrl in Controls.OfType<TextBox>())
+            {
+                ctrl.TextChanged -= txtFilter_TextChanged;
+            }
+
+            txtFilterControl.Text = string.Empty;
+            txtFilterControlLogicalName.Text = string.Empty;
+            txtFilterEntity.Text = string.Empty;
+            txtFilterEntityLogicalName.Text = string.Empty;
+            txtFilterFile.Text = string.Empty;
+            txtFilterFormName.Text = string.Empty;
+            txtFilterMethod.Text = string.Empty;
+            txtFilterParameters.Text = string.Empty;
+            cbbFilterEvent.SelectedIndex = -1;
+            cbbFilterEnabled.SelectedIndex = -1;
+            cbbFilterFormState.SelectedIndex = -1;
+            cbbFilterFormType.SelectedIndex = -1;
+            cbbFilterPassParameters.SelectedIndex = -1;
+            cbbFilterType.SelectedIndex = -1;
+
+            foreach (var ctrl in Controls.OfType<ComboBox>())
+            {
+                ctrl.SelectedIndexChanged += cbbFilter_SelectedIndexChanged;
+            }
+
+            foreach (var ctrl in Controls.OfType<TextBox>())
+            {
+                ctrl.TextChanged += txtFilter_TextChanged;
+            }
+
+            Filter();
         }
 
         private void TsbCloseThisTabClick(object sender, EventArgs e)
@@ -168,18 +283,18 @@ namespace MsCrmTools.ScriptsFinder
             }
         }
 
-        public string RepositoryName { get { return "MsCrmTools.ScriptsFinder"; } }
-        public string UserName { get { return "MscrmTools"; } }
-        public string HelpUrl { get { return "https://github.com/MscrmTools/MsCrmTools.ScriptsFinder/wiki"; } }
-
-        private void forAllEntitiesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void tsbShowFilter_Click(object sender, EventArgs e)
         {
-            ExecuteMethod(FindScripts, true);
+            pnlFilter.Visible = tsbShowFilter.Text == @"Show Filters";
+            tsbClearFilter.Visible = pnlFilter.Visible;
+            tsbShowFilter.Text = tsbShowFilter.Text == @"Show Filters" ? @"Hide Filters" : @"Show Filters";
         }
 
-        private void forEntitiesInSelectedSolutionsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void txtFilter_TextChanged(object sender, EventArgs e)
         {
-            ExecuteMethod(FindScripts, false);
+            filterThread?.Abort();
+            filterThread = new Thread(Filter);
+            filterThread.Start();
         }
     }
 }
