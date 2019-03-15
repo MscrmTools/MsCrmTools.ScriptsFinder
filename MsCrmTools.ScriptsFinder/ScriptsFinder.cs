@@ -16,8 +16,8 @@ namespace MsCrmTools.ScriptsFinder
 {
     public partial class ScriptsFinder : PluginControlBase, IGitHubPlugin, IHelpPlugin
     {
-        private Thread filterThread;
-        private List<ListViewItem> lScripts = new List<ListViewItem>();
+        private Thread _filterThread;
+        private List<ListViewItem> _lScripts = new List<ListViewItem>();
 
         #region Constructor
 
@@ -64,7 +64,7 @@ namespace MsCrmTools.ScriptsFinder
                 AsyncArgument = solutionList,
                 Work = (bw, e) =>
                 {
-                    lScripts = new List<ListViewItem>();
+                    _lScripts = new List<ListViewItem>();
                     var solutions = (List<Entity>)e.Argument;
 
                     var sManager = new ScriptsManager(Service, bw);
@@ -91,10 +91,10 @@ namespace MsCrmTools.ScriptsFinder
                         {
                             item.ForeColor = Color.Red;
                         }
-                        lScripts.Add(item);
+                        _lScripts.Add(item);
                     }
 
-                    e.Result = lScripts;
+                    e.Result = _lScripts;
                 },
                 PostWorkCallBack = e =>
                 {
@@ -128,7 +128,7 @@ namespace MsCrmTools.ScriptsFinder
             {
                 lvScripts.Items.Clear();
 
-                var filtered = lScripts.Where(l =>
+                var filtered = _lScripts.Where(l =>
                 {
                     var s = (Script)l.Tag;
 
@@ -234,8 +234,8 @@ namespace MsCrmTools.ScriptsFinder
         {
             var sfd = new SaveFileDialog
             {
-                Filter = "CSV file (*.csv)|*.csv",
-                Title = "Select a file where to save the list of scripts"
+                Filter = @"CSV file (*.csv)|*.csv",
+                Title = @"Select a file where to save the list of scripts"
             };
 
             if (sfd.ShowDialog() == DialogResult.OK)
@@ -254,27 +254,16 @@ namespace MsCrmTools.ScriptsFinder
                     {
                         var script = (Script)item.Tag;
 
-                        var line = Encoding.UTF8.GetBytes(string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}{14}",
-                            script.Type,
-                            script.EntityName,
-                            script.EntityLogicalName,
-                            script.FormName,
-                            script.FormType,
-                            script.FormState,
-                            script.Event,
-                            script.Attribute,
-                            script.AttributeLogicalName,
-                            script.ScriptLocation,
-                            script.MethodCalled,
-                            script.Arguments?.Replace(",", " "),
-                            script.IsActive,
-                            script.PassExecutionContext,
-                            Environment.NewLine));
+                        var line = Encoding.UTF8.GetBytes(
+                            $"\"{script.Type}\",\"{script.EntityName}\",\"{script.EntityLogicalName}\",\"{script.FormName}\",\"{script.FormType}\",\"{script.FormState}\",\"{script.Event}\",\"{script.Attribute}\",\"{script.AttributeLogicalName}\",\"{script.ScriptLocation}\",\"{script.MethodCalled}\",\"{script.Arguments?.Replace(",", " ")}\",\"{script.IsActive}\",\"{script.PassExecutionContext}\"{Environment.NewLine}");
 
                         fs.Write(line, 0, line.Length);
                     }
 
-                    if (MessageBox.Show(this, string.Format("File saved to '{0}'!\r\n\r\nWould you like to open the file now?", sfd.FileName), "Question",
+                    if (MessageBox.Show(this,
+                            $@"File saved to '{sfd.FileName}'!
+
+Would you like to open the file now?", @"Question",
                                     MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                     {
                         Process.Start(sfd.FileName);
@@ -292,9 +281,9 @@ namespace MsCrmTools.ScriptsFinder
 
         private void txtFilter_TextChanged(object sender, EventArgs e)
         {
-            filterThread?.Abort();
-            filterThread = new Thread(Filter);
-            filterThread.Start();
+            _filterThread?.Abort();
+            _filterThread = new Thread(Filter);
+            _filterThread.Start();
         }
     }
 }
