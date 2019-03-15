@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package>
   <metadata>
-    <id>MscrmTools.ScruptsFinder</id>
+    <id>MscrmTools.ScriptsFinder</id>
     <version>1.0.0</version>
     <title>Scripts Finder for XrmToolBox</title>
     <authors>MscrmTools</authors>
