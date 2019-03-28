@@ -175,7 +175,7 @@ namespace MsCrmTools.ScriptsFinder
         private bool matchEmptyOrTextBoxValue(TextBox txt, string value)
         {
             return string.IsNullOrEmpty(txt.Text) ||
-              value.ToLower().Contains(txt.Text.ToLower());
+              (value?.ToLower().Contains(txt.Text.ToLower()) ?? false);
         }
 
         private bool matchNullOrComboboxValue(ComboBox cbb, string value)
