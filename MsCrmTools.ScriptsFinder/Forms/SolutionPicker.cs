@@ -1,17 +1,18 @@
-﻿using System;
+﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.ServiceModel;
 using System.Windows.Forms;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 
 namespace MsCrmTools.ScriptsFinder.Forms
 {
     public partial class SolutionPicker : Form
     {
         private readonly IOrganizationService innerService;
+        private EntityCollection _solutions;
 
         public SolutionPicker(IOrganizationService service)
         {
@@ -41,6 +42,30 @@ namespace MsCrmTools.ScriptsFinder.Forms
             {
                 MessageBox.Show(this, "Please select at least one solution!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private void chkShowManaged_CheckedChanged(object sender, EventArgs e)
+        {
+            DisplaySolutions();
+        }
+
+        private void DisplaySolutions()
+        {
+            lstSolutions.Items.Clear();
+
+            foreach (Entity solution in _solutions.Entities.Where(s => s.GetAttributeValue<bool>("ismanaged") && chkShowManaged.Checked
+                                                                       || s.GetAttributeValue<bool>("ismanaged") == false))
+            {
+                ListViewItem item = new ListViewItem(solution["friendlyname"].ToString());
+                item.SubItems.Add(solution["version"].ToString());
+                item.SubItems.Add(((EntityReference)solution["publisherid"]).Name);
+                item.Tag = solution;
+
+                lstSolutions.Items.Add(item);
+            }
+
+            lstSolutions.Enabled = true;
+            btnSolutionPickerValidate.Enabled = true;
         }
 
         private void lstSolutions_ColumnClick(object sender, ColumnClickEventArgs e)
@@ -91,23 +116,12 @@ namespace MsCrmTools.ScriptsFinder.Forms
 
         private void worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            e.Result = RetrieveSolutions();
+            _solutions = RetrieveSolutions();
         }
 
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            foreach (Entity solution in ((EntityCollection)e.Result).Entities)
-            {
-                ListViewItem item = new ListViewItem(solution["friendlyname"].ToString());
-                item.SubItems.Add(solution["version"].ToString());
-                item.SubItems.Add(((EntityReference)solution["publisherid"]).Name);
-                item.Tag = solution;
-
-                lstSolutions.Items.Add(item);
-            }
-
-            lstSolutions.Enabled = true;
-            btnSolutionPickerValidate.Enabled = true;
+            DisplaySolutions();
         }
     }
 }

@@ -38,8 +38,13 @@
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chkShowManaged = new System.Windows.Forms.CheckBox();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.pnlMain = new System.Windows.Forms.Panel();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.panel2.SuspendLayout();
+            this.pnlMain.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -47,35 +52,40 @@
             this.panel1.BackColor = System.Drawing.Color.White;
             this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Controls.Add(this.lblHeader);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(500, 60);
+            this.panel1.Size = new System.Drawing.Size(1000, 115);
             this.panel1.TabIndex = 10;
             // 
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(439, 3);
+            this.pictureBox1.Location = new System.Drawing.Point(878, 6);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(58, 50);
+            this.pictureBox1.Size = new System.Drawing.Size(116, 96);
             this.pictureBox1.TabIndex = 5;
             this.pictureBox1.TabStop = false;
             // 
             // lblHeader
             // 
             this.lblHeader.AutoSize = true;
-            this.lblHeader.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHeader.Location = new System.Drawing.Point(3, 9);
+            this.lblHeader.Font = new System.Drawing.Font("Segoe UI Light", 12F);
+            this.lblHeader.Location = new System.Drawing.Point(6, 17);
+            this.lblHeader.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.lblHeader.Name = "lblHeader";
-            this.lblHeader.Size = new System.Drawing.Size(141, 25);
+            this.lblHeader.Size = new System.Drawing.Size(239, 45);
             this.lblHeader.TabIndex = 11;
             this.lblHeader.Text = "Select a solution";
             // 
             // btnSolutionPickerCancel
             // 
-            this.btnSolutionPickerCancel.Location = new System.Drawing.Point(413, 251);
+            this.btnSolutionPickerCancel.Location = new System.Drawing.Point(835, 6);
+            this.btnSolutionPickerCancel.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.btnSolutionPickerCancel.Name = "btnSolutionPickerCancel";
-            this.btnSolutionPickerCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnSolutionPickerCancel.Size = new System.Drawing.Size(150, 44);
             this.btnSolutionPickerCancel.TabIndex = 4;
             this.btnSolutionPickerCancel.Text = "Cancel";
             this.btnSolutionPickerCancel.UseVisualStyleBackColor = true;
@@ -84,9 +94,10 @@
             // btnSolutionPickerValidate
             // 
             this.btnSolutionPickerValidate.Enabled = false;
-            this.btnSolutionPickerValidate.Location = new System.Drawing.Point(332, 251);
+            this.btnSolutionPickerValidate.Location = new System.Drawing.Point(673, 6);
+            this.btnSolutionPickerValidate.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.btnSolutionPickerValidate.Name = "btnSolutionPickerValidate";
-            this.btnSolutionPickerValidate.Size = new System.Drawing.Size(75, 23);
+            this.btnSolutionPickerValidate.Size = new System.Drawing.Size(150, 44);
             this.btnSolutionPickerValidate.TabIndex = 3;
             this.btnSolutionPickerValidate.Text = "OK";
             this.btnSolutionPickerValidate.UseVisualStyleBackColor = true;
@@ -98,13 +109,16 @@
             this.columnHeader1,
             this.columnHeader2,
             this.columnHeader3});
+            this.lstSolutions.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstSolutions.Enabled = false;
             this.lstSolutions.FullRowSelect = true;
             this.lstSolutions.GridLines = true;
-            this.lstSolutions.Location = new System.Drawing.Point(7, 66);
+            this.lstSolutions.HideSelection = false;
+            this.lstSolutions.Location = new System.Drawing.Point(10, 10);
+            this.lstSolutions.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.lstSolutions.MultiSelect = false;
             this.lstSolutions.Name = "lstSolutions";
-            this.lstSolutions.Size = new System.Drawing.Size(481, 179);
+            this.lstSolutions.Size = new System.Drawing.Size(980, 348);
             this.lstSolutions.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.lstSolutions.TabIndex = 1;
             this.lstSolutions.UseCompatibleStateImageBehavior = false;
@@ -127,16 +141,48 @@
             this.columnHeader3.Text = "Publisher";
             this.columnHeader3.Width = 200;
             // 
+            // chkShowManaged
+            // 
+            this.chkShowManaged.AutoSize = true;
+            this.chkShowManaged.Location = new System.Drawing.Point(12, 15);
+            this.chkShowManaged.Name = "chkShowManaged";
+            this.chkShowManaged.Size = new System.Drawing.Size(300, 29);
+            this.chkShowManaged.TabIndex = 11;
+            this.chkShowManaged.Text = "Include managed solutions";
+            this.chkShowManaged.UseVisualStyleBackColor = true;
+            this.chkShowManaged.CheckedChanged += new System.EventHandler(this.chkShowManaged_CheckedChanged);
+            // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.chkShowManaged);
+            this.panel2.Controls.Add(this.btnSolutionPickerCancel);
+            this.panel2.Controls.Add(this.btnSolutionPickerValidate);
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel2.Location = new System.Drawing.Point(0, 483);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(1000, 61);
+            this.panel2.TabIndex = 12;
+            // 
+            // pnlMain
+            // 
+            this.pnlMain.Controls.Add(this.lstSolutions);
+            this.pnlMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlMain.Location = new System.Drawing.Point(0, 115);
+            this.pnlMain.Name = "pnlMain";
+            this.pnlMain.Padding = new System.Windows.Forms.Padding(10);
+            this.pnlMain.Size = new System.Drawing.Size(1000, 368);
+            this.pnlMain.TabIndex = 13;
+            // 
             // SolutionPicker
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(500, 283);
-            this.Controls.Add(this.lstSolutions);
-            this.Controls.Add(this.btnSolutionPickerCancel);
-            this.Controls.Add(this.btnSolutionPickerValidate);
+            this.ClientSize = new System.Drawing.Size(1000, 544);
+            this.Controls.Add(this.pnlMain);
+            this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SolutionPicker";
@@ -148,6 +194,9 @@
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
+            this.pnlMain.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -163,5 +212,8 @@
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.CheckBox chkShowManaged;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Panel pnlMain;
     }
 }

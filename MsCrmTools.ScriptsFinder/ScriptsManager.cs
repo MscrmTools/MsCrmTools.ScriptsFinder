@@ -9,67 +9,158 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Xml;
+using Entity = Microsoft.Xrm.Sdk.Entity;
 
 namespace MsCrmTools.ScriptsFinder
 {
     public class ScriptsManager
     {
-        private readonly IOrganizationService service;
-        private readonly BackgroundWorker worker;
-        private List<EntityMetadata> emds;
-        private int userLcid;
+        private readonly IOrganizationService _service;
+        private readonly BackgroundWorker _worker;
+        private List<EntityMetadata> _emds;
 
         public ScriptsManager(IOrganizationService service, BackgroundWorker worker)
         {
-            this.service = service;
-            this.worker = worker;
+            this._service = service;
+            this._worker = worker;
             Scripts = new List<Script>();
         }
 
+        public List<Entity> Forms { get; } = new List<Entity>();
+        public List<Entity> HomePageGrids { get; } = new List<Entity>();
+        public List<EntityMetadata> Metadata { get; private set; }
         public List<Script> Scripts { get; }
+        public int UserLcid { get; private set; }
+        public List<Entity> Views { get; } = new List<Entity>();
 
         public void Find(List<Entity> solutions, Version crmVersion)
         {
-            worker.ReportProgress(0, "Loading User language...");
+            _worker.ReportProgress(0, "Loading User language...");
             GetCurrentUserLcid();
 
-            worker.ReportProgress(0, "Loading Entities metadata...");
-            emds = GetEntities(solutions);
+            _worker.ReportProgress(0, "Loading Entities metadata...");
+            _emds = GetEntities(solutions);
+            Metadata = _emds.Where(x => x.DisplayName.UserLocalizedLabel != null).ToList();
 
-            worker.ReportProgress(0, "Loading Scripts...");
-            foreach (var emd in emds.Where(x => x.DisplayName.UserLocalizedLabel != null))
+            _worker.ReportProgress(0, "Loading Forms Scripts...");
+            LoadScripts(Metadata);
+
+            _worker.ReportProgress(0, "Loading Views Icon Scripts...");
+            LoadViews(Metadata);
+
+            if (crmVersion >= new Version(8, 2, 0, 0))
             {
-                LoadScripts(emd);
-                LoadRibbonCommands(emd);
+                _worker.ReportProgress(0, "Loading Homepages Scripts...");
+                LoadCustomControls(Metadata);
+            }
 
-                // Grid events are only available since CRM 8.2
-                if (crmVersion >= new Version(8, 2, 0, 0))
+            _worker.ReportProgress(0, "Loading Ribbon Commands Scripts...");
+            LoadRibbonCommands(Metadata);
+
+            _worker.ReportProgress(0, "Loading Ribbon Custom Rules Scripts...");
+            LoadRibbonCustomRule(Metadata);
+        }
+
+        public void UpdateForms(List<Script> scripts)
+        {
+            var uiItems = scripts.Select(s => s.UiItem).Distinct();
+
+            var bulk = new ExecuteMultipleRequest
+            {
+                Requests = new OrganizationRequestCollection(),
+                Settings = new ExecuteMultipleSettings
                 {
-                    LoadCustomControls(emd);
+                    ReturnResponses = true,
+                    ContinueOnError = true
+                }
+            };
+
+            foreach (var uiItem in uiItems)
+            {
+                var attribute = uiItem.LogicalName == "systemform" ? "formxml" : uiItem.LogicalName == "savedquery" ? "layoutxml" : "eventsxml";
+                var updateAttribute = uiItem.LogicalName == "systemform" ? "updatedformxml" : uiItem.LogicalName == "savedquery" ? "updatedlayoutxml" : "updatedeventsxml";
+
+                if (!uiItem.Contains(updateAttribute))
+                    continue;
+
+                var formToUpdate = new Entity(uiItem.LogicalName)
+                {
+                    Id = uiItem.Id,
+                    Attributes =
+                    {
+                        {attribute, uiItem[updateAttribute]}
+                    }
+                };
+
+                bulk.Requests.Add(new UpdateRequest { Target = formToUpdate });
+            }
+
+            bulk.Requests.Add(new PublishAllXmlRequest());
+
+            var bulkResponse = (ExecuteMultipleResponse)_service.Execute(bulk);
+
+            foreach (var response in bulkResponse.Responses)
+            {
+                if (response.Fault == null)
+                {
+                    foreach (var script in scripts.Where(s => s.UiItem.Id == (bulk.Requests[response.RequestIndex] as UpdateRequest)?.Target.Id))
+                    {
+                        script.Parameters = script.NewParameters ?? script.Parameters;
+                        script.Enabled = script.NewEnabled ?? script.Enabled;
+                        script.MethodCalled = script.NewMethodCalled ?? script.MethodCalled;
+                        script.PassExecutionContext = script.NewPassExecutionContext ?? script.PassExecutionContext;
+                        script.Library = script.NewLibrary ?? script.Library;
+
+                        script.NewParameters = null;
+                        script.NewEnabled = null;
+                        script.NewMethodCalled = null;
+                        script.NewPassExecutionContext = null;
+                        script.NewLibrary = null;
+                        script.NewOrder = null;
+
+                        script.UpdateErrorMessage = null;
+                        if (script.UiItem.Contains(script.ItemUpdateAttribute))
+                        {
+                            script.UiItem[script.ItemAttribute] = script.UiItem[script.ItemUpdateAttribute];
+                            script.UiItem.Attributes.Remove(script.ItemUpdateAttribute);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var script in scripts.Where(s =>
+                        s.UiItem.Id == (bulk.Requests[response.RequestIndex] as UpdateRequest)?.Target.Id))
+                    {
+                        script.UpdateErrorMessage = response.Fault.Message;
+                    }
                 }
             }
 
-            LoadRibbonCustomRule();
+            if (bulkResponse.IsFaulted)
+            {
+                throw new Exception("At least one form could not be updated. Select a row in error and click on button \"Show Error Message\" to read a detailed error");
+            }
         }
 
         private void GetCurrentUserLcid()
         {
-            var user = (WhoAmIResponse)service.Execute(new WhoAmIRequest());
+            var user = (WhoAmIResponse)_service.Execute(new WhoAmIRequest());
 
-            var userSettings = service.RetrieveMultiple(new QueryByAttribute("usersettings")
+            var userSettings = _service.RetrieveMultiple(new QueryByAttribute("usersettings")
             {
+                ColumnSet = new ColumnSet("uilanguageid"),
                 Attributes = { "systemuserid" },
                 Values = { user.UserId },
             }).Entities.First();
 
-            userLcid = userSettings.GetAttributeValue<int>("uilanguageid");
+            UserLcid = userSettings.GetAttributeValue<int>("uilanguageid");
         }
 
         private List<EntityMetadata> GetEntities(List<Entity> solutions)
         {
             if (solutions.Count > 0)
             {
-                var components = service.RetrieveMultiple(new QueryExpression("solutioncomponent")
+                var components = _service.RetrieveMultiple(new QueryExpression("solutioncomponent")
                 {
                     ColumnSet = new ColumnSet("objectid"),
                     NoLock = true,
@@ -119,7 +210,7 @@ namespace MsCrmTools.ScriptsFinder
                         ClientVersionStamp = null
                     };
 
-                    var response = (RetrieveMetadataChangesResponse)service.Execute(retrieveMetadataChangesRequest);
+                    var response = (RetrieveMetadataChangesResponse)_service.Execute(retrieveMetadataChangesRequest);
 
                     return response.EntityMetadata.ToList();
                 }
@@ -160,56 +251,79 @@ namespace MsCrmTools.ScriptsFinder
                     ClientVersionStamp = null
                 };
 
-                var response = (RetrieveMetadataChangesResponse)service.Execute(retrieveMetadataChangesRequest);
+                var response = (RetrieveMetadataChangesResponse)_service.Execute(retrieveMetadataChangesRequest);
 
                 return response.EntityMetadata.ToList();
             }
         }
 
-        private void LoadCustomControls(EntityMetadata emd)
+        private void LoadCustomControls(List<EntityMetadata> emds)
         {
-            var ccs = service.RetrieveMultiple(new QueryExpression("customcontroldefaultconfig")
+            var ccs = _service.RetrieveMultiple(new QueryExpression("customcontroldefaultconfig")
             {
-                ColumnSet = new ColumnSet("eventsxml"),
+                ColumnSet = new ColumnSet("eventsxml", "primaryentitytypecode"),
                 Criteria = new FilterExpression
                 {
                     Conditions =
                     {
-                        new ConditionExpression("primaryentitytypecode", ConditionOperator.Equal, emd.ObjectTypeCode.Value),
-                        new ConditionExpression("eventsxml", ConditionOperator.NotNull)
+                        new ConditionExpression("primaryentitytypecode", ConditionOperator.In, emds.Select(e => e.ObjectTypeCode??0).ToArray()),
                     }
                 }
             });
 
-            foreach (var cc in ccs.Entities)
+            var homePageGrids = ccs.Entities.ToList();
+            HomePageGrids.AddRange(homePageGrids);
+
+            foreach (var cc in HomePageGrids)
             {
+                if (!cc.Contains("eventsxml"))
+                    continue;
+
+                var emd = emds.First(e => e.LogicalName == cc.GetAttributeValue<string>("primaryentitytypecode"));
+
                 var doc = new XmlDocument();
                 doc.LoadXml(cc.GetAttributeValue<string>("eventsxml"));
+                var eventNodes = doc.SelectNodes("//event");
+                if (eventNodes == null) continue;
 
-                foreach (XmlNode eventNode in doc.SelectNodes("//event"))
+                foreach (XmlNode eventNode in eventNodes)
                 {
+                    if (eventNode.Attributes == null) continue;
+
                     string eventName = eventNode.Attributes["name"].Value;
 
-                    foreach (XmlNode handlerNode in eventNode.SelectNodes("Handlers/Handler"))
+                    var handlerNodes = eventNode.SelectNodes("Handlers/Handler");
+                    if (handlerNodes == null) continue;
+
+                    int index = 0;
+                    foreach (XmlNode handlerNode in handlerNodes)
                     {
-                        var script = new Script();
-                        script.EntityLogicalName = emd.LogicalName;
-                        script.EntityName = emd.DisplayName.UserLocalizedLabel.Label;
-                        script.ScriptLocation = handlerNode.Attributes["libraryName"].Value;
-                        script.MethodCalled = handlerNode.Attributes["functionName"].Value;
-                        script.IsActive = handlerNode.Attributes["enabled"].Value == "true";
-                        script.PassExecutionContext = handlerNode.Attributes["passExecutionContext"]?.Value == "true";
-                        script.Event = eventName;
-                        script.Arguments = handlerNode.Attributes["parameters"] != null ? handlerNode.Attributes["parameters"].Value : "";
-                        script.Type = "Homepage Grid event";
+                        if (handlerNode.Attributes == null) continue;
+
+                        var script = new Script
+                        {
+                            EntityLogicalName = emd.LogicalName,
+                            EntityName = emd.DisplayName.UserLocalizedLabel.Label,
+                            Library = handlerNode.Attributes["libraryName"].Value,
+                            MethodCalled = handlerNode.Attributes["functionName"].Value,
+                            Enabled = handlerNode.Attributes["enabled"].Value == "true",
+                            PassExecutionContext = handlerNode.Attributes["passExecutionContext"]?.Value == "true",
+                            Event = eventName,
+                            Parameters = handlerNode.Attributes["parameters"] != null
+                                ? handlerNode.Attributes["parameters"].Value
+                                : "",
+                            Type = "Homepage Grid event",
+                            UiItem = cc,
+                            Order = index++
+                        };
 
                         if (eventName == "onchange")
                         {
-                            var amd = emd.Attributes.FirstOrDefault(x => x.LogicalName == eventNode.Attributes["attribute"].Value);
+                            var amd = emd.Attributes.FirstOrDefault(x => x.LogicalName == eventNode.Attributes?["attribute"].Value);
 
                             if (amd != null)
                             {
-                                var displayName = amd.DisplayName != null && amd.DisplayName.UserLocalizedLabel != null
+                                var displayName = amd.DisplayName?.UserLocalizedLabel != null
                                     ? amd.DisplayName.UserLocalizedLabel.Label
                                     : "(" + amd.LogicalName + ")";
 
@@ -227,34 +341,42 @@ namespace MsCrmTools.ScriptsFinder
                     }
                 }
 
-                foreach (XmlNode libraryNode in doc.SelectNodes("//Library"))
+                var libraryNodes = doc.SelectNodes("//Library");
+                if (libraryNodes == null) continue;
+
+                int lIndex = 0;
+                foreach (XmlNode libraryNode in libraryNodes)
                 {
-                    var script = new Script();
-                    script.EntityLogicalName = emd.LogicalName;
-                    script.EntityName = emd.DisplayName.UserLocalizedLabel.Label;
-                    script.ScriptLocation = libraryNode.Attributes["name"].Value;
-                    script.MethodCalled = string.Empty;
-                    script.Event = string.Empty;
-                    script.Attribute = string.Empty;
-                    script.AttributeLogicalName = string.Empty;
-                    script.Type = "Homepage Grid Library";
+                    var script = new Script
+                    {
+                        EntityLogicalName = emd.LogicalName,
+                        EntityName = emd.DisplayName.UserLocalizedLabel.Label,
+                        Library = libraryNode.Attributes?["name"].Value,
+                        MethodCalled = string.Empty,
+                        Event = string.Empty,
+                        Attribute = string.Empty,
+                        AttributeLogicalName = string.Empty,
+                        Type = "Homepage Grid Library",
+                        UiItem = cc,
+                        Order = lIndex++
+                    };
 
                     Scripts.Add(script);
                 }
             }
         }
 
-        private void LoadRibbonCommands(EntityMetadata emd)
+        private void LoadRibbonCommands(List<EntityMetadata> emds)
         {
-            var commands = service.RetrieveMultiple(new QueryExpression("ribboncommand")
+            var commands = _service.RetrieveMultiple(new QueryExpression("ribboncommand")
             {
-                ColumnSet = new ColumnSet(true),
+                ColumnSet = new ColumnSet("commanddefinition", "entity", "command"),
                 Criteria = new FilterExpression
                 {
                     Conditions =
                     {
                         new ConditionExpression("commanddefinition", ConditionOperator.Like, "%Library=\"$webresource:%"),
-                        new ConditionExpression("entity", ConditionOperator.Equal, emd.LogicalName)
+                        new ConditionExpression("entity", ConditionOperator.In, emds.Select(e => e.LogicalName).ToArray())
                     }
                 }
             });
@@ -270,6 +392,7 @@ namespace MsCrmTools.ScriptsFinder
                     return;
                 }
 
+                int index = 0;
                 foreach (XmlNode actionNode in actionsNode.ChildNodes)
                 {
                     var libraryNode = actionNode.Attributes?["Library"];
@@ -278,33 +401,39 @@ namespace MsCrmTools.ScriptsFinder
                         continue;
                     }
 
+                    var emd = emds.First(e => e.LogicalName == command.GetAttributeValue<string>("entity"));
+
                     var libraryName = libraryNode.Value;
 
                     if (libraryName.Split(':').Length == 1)
                         continue;
 
-                    var script = new Script();
-                    script.EntityLogicalName = emd.LogicalName;
-                    script.EntityName = emd.DisplayName.UserLocalizedLabel.Label;
-                    script.ScriptLocation = libraryName.Split(':')[1];
-                    script.MethodCalled = actionNode.Attributes["FunctionName"].Value;
-                    script.Event = "";
-                    script.Attribute = "";
-                    script.AttributeLogicalName = "";
-                    script.FormState = string.Empty;
-                    script.Type = "Ribbon Command";
+                    var script = new Script
+                    {
+                        UiItem = command,
+                        ItemName = command.GetAttributeValue<string>("command"),
+                        EntityLogicalName = emd.LogicalName,
+                        EntityName = emd.DisplayName.UserLocalizedLabel.Label,
+                        Library = libraryName.Split(':')[1],
+                        MethodCalled = actionNode.Attributes["FunctionName"].Value,
+                        Event = "",
+                        Attribute = "",
+                        AttributeLogicalName = "",
+                        FormState = string.Empty,
+                        Type = "Ribbon Command",
+                        Order = index++
+                    };
 
                     var parameters = new List<string>();
 
                     foreach (XmlNode parameterNode in actionNode.ChildNodes)
                     {
-                        // ReSharper disable once PossibleNullReferenceException
-                        parameters.Add(string.Format("{0}:{1}", parameterNode.Name, parameterNode.Attributes["Value"].Value));
+                        parameters.Add($"{parameterNode.Name}:{parameterNode.Attributes?["Value"].Value}");
                     }
 
-                    script.Arguments = string.Join(" / ", parameters);
+                    script.Parameters = string.Join(" / ", parameters);
 
-                    if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                    if (script.Library.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
                     {
                         continue;
                     }
@@ -314,16 +443,17 @@ namespace MsCrmTools.ScriptsFinder
             }
         }
 
-        private void LoadRibbonCustomRule()
+        private void LoadRibbonCustomRule(List<EntityMetadata> emds)
         {
-            var rules = service.RetrieveMultiple(new QueryExpression("ribbonrule")
+            var rules = _service.RetrieveMultiple(new QueryExpression("ribbonrule")
             {
-                ColumnSet = new ColumnSet(true),
+                ColumnSet = new ColumnSet("ruledefinition", "ruleid", "entity"),
                 Criteria = new FilterExpression
                 {
                     Conditions =
                     {
                         new ConditionExpression("ruledefinition", ConditionOperator.Like, "%Library=\"$webresource:%"),
+                        new ConditionExpression("entity", ConditionOperator.In, emds.Select(e => e.LogicalName).ToArray())
                     }
                 }
             });
@@ -339,6 +469,7 @@ namespace MsCrmTools.ScriptsFinder
                     return;
                 }
 
+                int index = 0;
                 foreach (XmlNode customRuleNode in customRulesNode)
                 {
                     var libraryNode = customRuleNode.Attributes?["Library"];
@@ -352,28 +483,36 @@ namespace MsCrmTools.ScriptsFinder
                     if (libraryName.Split(':').Length == 1)
                         continue;
 
-                    var script = new Script();
-                    script.EntityLogicalName = rule.GetAttributeValue<string>("entity");
-                    script.EntityName = emds.FirstOrDefault(e => e.LogicalName == script.EntityLogicalName)?.DisplayName.UserLocalizedLabel.Label ?? "Application Ribbon";
-                    script.ScriptLocation = libraryName.Split(':')[1];
-                    script.MethodCalled = customRuleNode.Attributes["FunctionName"].Value;
-                    script.Event = "";
-                    script.Attribute = "";
-                    script.AttributeLogicalName = "";
-                    script.FormState = string.Empty;
-                    script.Type = "Ribbon Custom Rule";
+                    var entity = rule.GetAttributeValue<string>("entity");
+
+                    var script = new Script
+                    {
+                        UiItem = rule,
+                        ItemName = rule.GetAttributeValue<string>("ruleid"),
+                        EntityLogicalName = entity,
+                        EntityName =
+                            emds.FirstOrDefault(e => e.LogicalName == entity)?.DisplayName.UserLocalizedLabel.Label ??
+                            "Application Ribbon",
+                        Library = libraryName.Split(':')[1],
+                        MethodCalled = customRuleNode.Attributes["FunctionName"].Value,
+                        Event = "",
+                        Attribute = "",
+                        AttributeLogicalName = "",
+                        FormState = string.Empty,
+                        Type = "Ribbon Custom Rule",
+                        Order = index++
+                    };
 
                     var parameters = new List<string>();
 
                     foreach (XmlNode parameterNode in customRuleNode.ChildNodes)
                     {
-                        // ReSharper disable once PossibleNullReferenceException
-                        parameters.Add(string.Format("{0}:{1}", parameterNode.Name, parameterNode.Attributes["Value"].Value));
+                        parameters.Add($"{parameterNode.Name}:{parameterNode.Attributes?["Value"].Value}");
                     }
 
-                    script.Arguments = string.Join(" / ", parameters);
+                    script.Parameters = string.Join(" / ", parameters);
 
-                    if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                    if (script.Library.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
                     {
                         continue;
                     }
@@ -383,19 +522,37 @@ namespace MsCrmTools.ScriptsFinder
             }
         }
 
-        private void LoadScripts(EntityMetadata emd)
+        private void LoadScripts(List<EntityMetadata> emds)
         {
-            var qba = new QueryByAttribute("systemform");
-            qba.Attributes.Add("objecttypecode");
-            qba.Values.Add(emd.ObjectTypeCode ?? 0);
-            qba.ColumnSet = new ColumnSet(true);
+            var query = new QueryExpression("systemform")
+            {
+                ColumnSet = new ColumnSet("name", "formxml", "type", "formactivationstate", "objecttypecode"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("objecttypecode", ConditionOperator.In,
+                            emds.Select(e => e.ObjectTypeCode ?? 0).ToArray())
+                    }
+                }
+            };
 
-            foreach (var form in service.RetrieveMultiple(qba).Entities)
+            //var qba = new QueryByAttribute("systemform");
+            //qba.Attributes.Add("objecttypecode");
+            //qba.Values.Add(emd.ObjectTypeCode ?? 0);
+            //qba.ColumnSet = new ColumnSet(true);
+
+            var forms = _service.RetrieveMultiple(query).Entities.ToList();
+            Forms.AddRange(forms);
+
+            foreach (var form in forms)
             {
                 if (form["formxml"] == null)
                 {
                     continue;
                 }
+
+                var emd = emds.First(e => e.LogicalName == form.GetAttributeValue<string>("objecttypecode"));
 
                 var doc = new XmlDocument();
                 doc.LoadXml(form["formxml"].ToString());
@@ -405,20 +562,25 @@ namespace MsCrmTools.ScriptsFinder
                     string eventName = eventNode.Attributes["name"]?.Value;
                     if (eventName == null) continue;
 
+                    int index = 0;
                     foreach (XmlNode handlerNode in eventNode.SelectNodes("Handlers/Handler"))
                     {
-                        var script = new Script();
-                        script.EntityLogicalName = emd.LogicalName;
-                        script.EntityName = emd.DisplayName?.UserLocalizedLabel?.Label ?? "N/A";
-                        script.ScriptLocation = handlerNode.Attributes["libraryName"]?.Value ?? "N/A";
-                        script.MethodCalled = handlerNode.Attributes["functionName"]?.Value ?? "N/A";
-                        script.IsActive = handlerNode.Attributes["enabled"]?.Value == "true";
-                        script.PassExecutionContext = handlerNode.Attributes["passExecutionContext"]?.Value == "true";
-                        script.Event = eventName;
-                        script.Arguments = handlerNode.Attributes["parameters"]?.Value ?? "";
-                        script.Type = "Form event";
+                        var script = new Script
+                        {
+                            UiItem = form,
+                            EntityLogicalName = emd.LogicalName,
+                            EntityName = emd.DisplayName?.UserLocalizedLabel?.Label ?? "N/A",
+                            Library = handlerNode.Attributes["libraryName"]?.Value ?? "N/A",
+                            MethodCalled = handlerNode.Attributes["functionName"]?.Value ?? "N/A",
+                            Enabled = handlerNode.Attributes["enabled"]?.Value == "true",
+                            PassExecutionContext = handlerNode.Attributes["passExecutionContext"]?.Value == "true",
+                            Event = eventName,
+                            Parameters = handlerNode.Attributes["parameters"]?.Value ?? "",
+                            Type = "Form event",
+                            Order = index++
+                        };
 
-                        if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                        if (script.Library.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
                         {
                             continue;
                         }
@@ -458,14 +620,14 @@ namespace MsCrmTools.ScriptsFinder
 
                                 XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
 
-                                var labelNode = node.ParentNode.SelectSingleNode("labels/label[@languagecode='" + userLcid + "']") ??
+                                var labelNode = node.ParentNode.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']") ??
                                                 node.ParentNode.SelectSingleNode("labels/label");
 
                                 var label = labelNode.Attributes["description"]?.Value ?? "N/A";
 
                                 script.Type = "Subgrid event";
                                 script.Attribute = $"{label} / {script.Attribute}";
-                                script.AttributeLogicalName = $"{control} / {script.AttributeLogicalName}";
+                                script.AttributeLogicalName = $"{control}:{script.AttributeLogicalName}";
                             }
                         }
                         else if (eventName == "onrecordselect")
@@ -474,7 +636,7 @@ namespace MsCrmTools.ScriptsFinder
                             if (control == null) continue;
 
                             XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
-                            var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + userLcid + "']")?.Attributes?[
+                            var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']")?.Attributes?[
                                     "description"]?.Value ?? "N/A";
 
                             script.Type = "Subgrid event";
@@ -489,7 +651,7 @@ namespace MsCrmTools.ScriptsFinder
                                 if (control == null) continue;
 
                                 XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
-                                var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + userLcid + "']")?.Attributes?[
+                                var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']")?.Attributes?[
                                                 "description"]?.Value ?? "N/A";
 
                                 script.Type = "Subgrid event";
@@ -502,7 +664,7 @@ namespace MsCrmTools.ScriptsFinder
                             script.Attribute = "";
                             script.AttributeLogicalName = "";
                         }
-                        script.FormName = form["name"]?.ToString() ?? "N/A";
+                        script.ItemName = form["name"]?.ToString() ?? "N/A";
                         script.FormState = "Active";
                         if (form.Contains("formactivationstate"))
                         {
@@ -519,32 +681,97 @@ namespace MsCrmTools.ScriptsFinder
                     }
                 }
 
+                int lIndex = 0;
                 foreach (XmlNode libraryNode in doc.SelectNodes("//Library"))
                 {
-                    var script = new Script();
-                    script.EntityLogicalName = emd.LogicalName;
-                    script.EntityName = emd.DisplayName?.UserLocalizedLabel?.Label ?? "N/A";
-                    script.ScriptLocation = libraryNode.Attributes?["name"]?.Value ?? "N/A";
-                    script.MethodCalled = string.Empty;
-                    script.Event = string.Empty;
-                    script.Attribute = string.Empty;
-                    script.AttributeLogicalName = string.Empty;
-                    script.Type = "Form Library";
-
-                    script.FormName = form["name"].ToString();
-                    script.FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate")?.Value == 0
-                        ? "Inactive"
-                        : "Active";
-
                     var type = form.GetAttributeValue<OptionSetValue>("type")?.Value ?? -1;
-                    script.FormType = type == 2
-                        ? "Main"
-                        : (type == 7 ? "Quick Create" : "value: " + type);
 
-                    if (script.ScriptLocation.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
+                    var script = new Script
+                    {
+                        UiItem = form,
+                        EntityLogicalName = emd.LogicalName,
+                        EntityName = emd.DisplayName?.UserLocalizedLabel?.Label ?? "N/A",
+                        Library = libraryNode.Attributes?["name"]?.Value ?? "N/A",
+                        MethodCalled = string.Empty,
+                        Event = string.Empty,
+                        Attribute = string.Empty,
+                        AttributeLogicalName = string.Empty,
+                        Type = "Form Library",
+                        Order = lIndex++,
+                        ItemName = form["name"].ToString(),
+                        FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate")?.Value == 0
+                            ? "Inactive"
+                            : "Active",
+                        FormType = type == 2
+                            ? "Main"
+                            : type == 7 ? "Quick Create" : "value: " + type
+                    };
+
+                    if (script.Library.IndexOf("_main_system_library", StringComparison.Ordinal) >= 0)
                     {
                         continue;
                     }
+
+                    Scripts.Add(script);
+                }
+            }
+        }
+
+        private void LoadViews(List<EntityMetadata> emds)
+        {
+            var query = new QueryExpression("savedquery")
+            {
+                ColumnSet = new ColumnSet("layoutxml", "name", "returnedtypecode"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("returnedtypecode", ConditionOperator.In, emds.Select(e => e.LogicalName).ToArray())
+                    }
+                }
+            };
+
+            var views = _service.RetrieveMultiple(query).Entities.ToList();
+            Views.AddRange(views);
+
+            foreach (var view in views)
+            {
+                if (!view.Contains("layoutxml"))
+                {
+                    continue;
+                }
+
+                var emd = emds.First(e => e.LogicalName == view.GetAttributeValue<string>("returnedtypecode"));
+
+                var doc = new XmlDocument();
+                doc.LoadXml(view.GetAttributeValue<string>("layoutxml"));
+
+                var nodes = doc.DocumentElement?.SelectNodes("row/cell[string(@imageproviderfunctionname)]");
+                if (nodes == null) continue;
+                foreach (XmlNode node in nodes)
+                {
+                    var script = new Script
+                    {
+                        Action = ScriptAction.None,
+                        Attribute = emd.Attributes.First(a => a.LogicalName == node.Attributes?["name"].Value)
+                                        .DisplayName?.UserLocalizedLabel?.Label ?? "N/A",
+                        AttributeLogicalName = node.Attributes?["name"].Value,
+                        Enabled = true,
+                        EntityLogicalName = emd.LogicalName,
+                        EntityName = emd.DisplayName?.UserLocalizedLabel?.Label ?? "N/A",
+                        Event = "",
+                        ItemName = view.GetAttributeValue<string>("name"),
+                        FormState = "",
+                        FormType = "",
+                        HasProblem = false,
+                        Library = node.Attributes?["imageproviderwebresource"].Value.Split(':').Last(),
+                        MethodCalled = node.Attributes?["imageproviderfunctionname"].Value,
+                        Order = 1,
+                        Parameters = "",
+                        PassExecutionContext = false,
+                        Type = "Grid Icon",
+                        UiItem = view
+                    };
 
                     Scripts.Add(script);
                 }
