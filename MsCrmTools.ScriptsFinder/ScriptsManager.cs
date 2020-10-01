@@ -753,7 +753,7 @@ namespace MsCrmTools.ScriptsFinder
                     var script = new Script
                     {
                         Action = ScriptAction.None,
-                        Attribute = emd.Attributes.First(a => a.LogicalName == node.Attributes?["name"].Value)
+                        Attribute = emd.Attributes.FirstOrDefault(a => a.LogicalName == node.Attributes?["name"].Value)?
                                         .DisplayName?.UserLocalizedLabel?.Label ?? "N/A",
                         AttributeLogicalName = node.Attributes?["name"].Value,
                         Enabled = true,
