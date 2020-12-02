@@ -46,6 +46,7 @@
             this.pnlLibrary = new System.Windows.Forms.Panel();
             this.cbbLibrary = new System.Windows.Forms.ComboBox();
             this.btnReloadWebResources = new System.Windows.Forms.Button();
+            this.chkLoadAlsoManagedWebresources = new System.Windows.Forms.CheckBox();
             this.lblLibrary = new System.Windows.Forms.Label();
             this.txtField = new System.Windows.Forms.TextBox();
             this.lblField = new System.Windows.Forms.Label();
@@ -75,17 +76,19 @@
             this.pnlHeader.Controls.Add(this.lblHeaderTitle);
             this.pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlHeader.Location = new System.Drawing.Point(0, 0);
+            this.pnlHeader.Margin = new System.Windows.Forms.Padding(2);
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(800, 100);
+            this.pnlHeader.Size = new System.Drawing.Size(600, 80);
             this.pnlHeader.TabIndex = 0;
             // 
             // lblHeaderDesc
             // 
             this.lblHeaderDesc.AutoSize = true;
             this.lblHeaderDesc.Font = new System.Drawing.Font("Segoe UI Light", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHeaderDesc.Location = new System.Drawing.Point(18, 58);
+            this.lblHeaderDesc.Location = new System.Drawing.Point(14, 46);
+            this.lblHeaderDesc.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblHeaderDesc.Name = "lblHeaderDesc";
-            this.lblHeaderDesc.Size = new System.Drawing.Size(464, 30);
+            this.lblHeaderDesc.Size = new System.Drawing.Size(333, 21);
             this.lblHeaderDesc.TabIndex = 1;
             this.lblHeaderDesc.Text = "Provide information below to register a new item";
             // 
@@ -93,9 +96,10 @@
             // 
             this.lblHeaderTitle.AutoSize = true;
             this.lblHeaderTitle.Font = new System.Drawing.Font("Segoe UI Light", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHeaderTitle.Location = new System.Drawing.Point(15, 13);
+            this.lblHeaderTitle.Location = new System.Drawing.Point(11, 10);
+            this.lblHeaderTitle.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblHeaderTitle.Name = "lblHeaderTitle";
-            this.lblHeaderTitle.Size = new System.Drawing.Size(434, 45);
+            this.lblHeaderTitle.Size = new System.Drawing.Size(321, 32);
             this.lblHeaderTitle.TabIndex = 0;
             this.lblHeaderTitle.Text = "Register a new event or library";
             // 
@@ -104,18 +108,19 @@
             this.pnlFooter.Controls.Add(this.btnSolutionPickerCancel);
             this.pnlFooter.Controls.Add(this.btnSolutionPickerValidate);
             this.pnlFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlFooter.Location = new System.Drawing.Point(0, 965);
+            this.pnlFooter.Location = new System.Drawing.Point(0, 772);
+            this.pnlFooter.Margin = new System.Windows.Forms.Padding(2);
             this.pnlFooter.Name = "pnlFooter";
-            this.pnlFooter.Size = new System.Drawing.Size(800, 64);
+            this.pnlFooter.Size = new System.Drawing.Size(600, 51);
             this.pnlFooter.TabIndex = 1;
             // 
             // btnSolutionPickerCancel
             // 
             this.btnSolutionPickerCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnSolutionPickerCancel.Location = new System.Drawing.Point(635, 9);
-            this.btnSolutionPickerCancel.Margin = new System.Windows.Forms.Padding(6);
+            this.btnSolutionPickerCancel.Location = new System.Drawing.Point(476, 7);
+            this.btnSolutionPickerCancel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.btnSolutionPickerCancel.Name = "btnSolutionPickerCancel";
-            this.btnSolutionPickerCancel.Size = new System.Drawing.Size(150, 44);
+            this.btnSolutionPickerCancel.Size = new System.Drawing.Size(112, 35);
             this.btnSolutionPickerCancel.TabIndex = 6;
             this.btnSolutionPickerCancel.Text = "Cancel";
             this.btnSolutionPickerCancel.UseVisualStyleBackColor = true;
@@ -123,10 +128,10 @@
             // btnSolutionPickerValidate
             // 
             this.btnSolutionPickerValidate.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnSolutionPickerValidate.Location = new System.Drawing.Point(473, 9);
-            this.btnSolutionPickerValidate.Margin = new System.Windows.Forms.Padding(6);
+            this.btnSolutionPickerValidate.Location = new System.Drawing.Point(355, 7);
+            this.btnSolutionPickerValidate.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.btnSolutionPickerValidate.Name = "btnSolutionPickerValidate";
-            this.btnSolutionPickerValidate.Size = new System.Drawing.Size(150, 44);
+            this.btnSolutionPickerValidate.Size = new System.Drawing.Size(112, 35);
             this.btnSolutionPickerValidate.TabIndex = 5;
             this.btnSolutionPickerValidate.Text = "OK";
             this.btnSolutionPickerValidate.UseVisualStyleBackColor = true;
@@ -156,10 +161,11 @@
             this.pnlMain.Controls.Add(this.lblEntity);
             this.pnlMain.Controls.Add(this.pnlAction);
             this.pnlMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlMain.Location = new System.Drawing.Point(0, 100);
+            this.pnlMain.Location = new System.Drawing.Point(0, 80);
+            this.pnlMain.Margin = new System.Windows.Forms.Padding(2);
             this.pnlMain.Name = "pnlMain";
-            this.pnlMain.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlMain.Size = new System.Drawing.Size(800, 865);
+            this.pnlMain.Padding = new System.Windows.Forms.Padding(8);
+            this.pnlMain.Size = new System.Drawing.Size(600, 692);
             this.pnlMain.TabIndex = 2;
             // 
             // chkEnabled
@@ -168,9 +174,10 @@
             this.chkEnabled.Checked = true;
             this.chkEnabled.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkEnabled.Dock = System.Windows.Forms.DockStyle.Top;
-            this.chkEnabled.Location = new System.Drawing.Point(10, 706);
+            this.chkEnabled.Location = new System.Drawing.Point(8, 574);
+            this.chkEnabled.Margin = new System.Windows.Forms.Padding(2);
             this.chkEnabled.Name = "chkEnabled";
-            this.chkEnabled.Size = new System.Drawing.Size(780, 27);
+            this.chkEnabled.Size = new System.Drawing.Size(584, 21);
             this.chkEnabled.TabIndex = 17;
             this.chkEnabled.UseVisualStyleBackColor = true;
             // 
@@ -178,29 +185,32 @@
             // 
             this.lblEnabled.AutoSize = true;
             this.lblEnabled.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblEnabled.Location = new System.Drawing.Point(10, 671);
+            this.lblEnabled.Location = new System.Drawing.Point(8, 546);
+            this.lblEnabled.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblEnabled.Name = "lblEnabled";
-            this.lblEnabled.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblEnabled.Size = new System.Drawing.Size(91, 35);
+            this.lblEnabled.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblEnabled.Size = new System.Drawing.Size(68, 28);
             this.lblEnabled.TabIndex = 16;
             this.lblEnabled.Text = "Enabled";
             // 
             // txtParameters
             // 
             this.txtParameters.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtParameters.Location = new System.Drawing.Point(10, 640);
+            this.txtParameters.Location = new System.Drawing.Point(8, 520);
+            this.txtParameters.Margin = new System.Windows.Forms.Padding(2);
             this.txtParameters.Name = "txtParameters";
-            this.txtParameters.Size = new System.Drawing.Size(780, 31);
+            this.txtParameters.Size = new System.Drawing.Size(584, 26);
             this.txtParameters.TabIndex = 15;
             // 
             // lblParameters
             // 
             this.lblParameters.AutoSize = true;
             this.lblParameters.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblParameters.Location = new System.Drawing.Point(10, 605);
+            this.lblParameters.Location = new System.Drawing.Point(8, 492);
+            this.lblParameters.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblParameters.Name = "lblParameters";
-            this.lblParameters.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblParameters.Size = new System.Drawing.Size(122, 35);
+            this.lblParameters.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblParameters.Size = new System.Drawing.Size(91, 28);
             this.lblParameters.TabIndex = 14;
             this.lblParameters.Text = "Parameters";
             // 
@@ -210,9 +220,10 @@
             this.chkPassExecutionContext.Checked = true;
             this.chkPassExecutionContext.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkPassExecutionContext.Dock = System.Windows.Forms.DockStyle.Top;
-            this.chkPassExecutionContext.Location = new System.Drawing.Point(10, 578);
+            this.chkPassExecutionContext.Location = new System.Drawing.Point(8, 471);
+            this.chkPassExecutionContext.Margin = new System.Windows.Forms.Padding(2);
             this.chkPassExecutionContext.Name = "chkPassExecutionContext";
-            this.chkPassExecutionContext.Size = new System.Drawing.Size(780, 27);
+            this.chkPassExecutionContext.Size = new System.Drawing.Size(584, 21);
             this.chkPassExecutionContext.TabIndex = 13;
             this.chkPassExecutionContext.UseVisualStyleBackColor = true;
             // 
@@ -220,29 +231,32 @@
             // 
             this.lblPassExecutionContext.AutoSize = true;
             this.lblPassExecutionContext.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblPassExecutionContext.Location = new System.Drawing.Point(10, 543);
+            this.lblPassExecutionContext.Location = new System.Drawing.Point(8, 443);
+            this.lblPassExecutionContext.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblPassExecutionContext.Name = "lblPassExecutionContext";
-            this.lblPassExecutionContext.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblPassExecutionContext.Size = new System.Drawing.Size(241, 35);
+            this.lblPassExecutionContext.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblPassExecutionContext.Size = new System.Drawing.Size(177, 28);
             this.lblPassExecutionContext.TabIndex = 12;
             this.lblPassExecutionContext.Text = "Pass Execution Context";
             // 
             // txtMethod
             // 
             this.txtMethod.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtMethod.Location = new System.Drawing.Point(10, 512);
+            this.txtMethod.Location = new System.Drawing.Point(8, 417);
+            this.txtMethod.Margin = new System.Windows.Forms.Padding(2);
             this.txtMethod.Name = "txtMethod";
-            this.txtMethod.Size = new System.Drawing.Size(780, 31);
+            this.txtMethod.Size = new System.Drawing.Size(584, 26);
             this.txtMethod.TabIndex = 11;
             // 
             // lblMethod
             // 
             this.lblMethod.AutoSize = true;
             this.lblMethod.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblMethod.Location = new System.Drawing.Point(10, 477);
+            this.lblMethod.Location = new System.Drawing.Point(8, 389);
+            this.lblMethod.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblMethod.Name = "lblMethod";
-            this.lblMethod.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblMethod.Size = new System.Drawing.Size(84, 35);
+            this.lblMethod.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblMethod.Size = new System.Drawing.Size(63, 28);
             this.lblMethod.TabIndex = 10;
             this.lblMethod.Text = "Method";
             // 
@@ -250,10 +264,12 @@
             // 
             this.pnlLibrary.Controls.Add(this.cbbLibrary);
             this.pnlLibrary.Controls.Add(this.btnReloadWebResources);
+            this.pnlLibrary.Controls.Add(this.chkLoadAlsoManagedWebresources);
             this.pnlLibrary.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlLibrary.Location = new System.Drawing.Point(10, 438);
+            this.pnlLibrary.Location = new System.Drawing.Point(8, 358);
+            this.pnlLibrary.Margin = new System.Windows.Forms.Padding(2);
             this.pnlLibrary.Name = "pnlLibrary";
-            this.pnlLibrary.Size = new System.Drawing.Size(780, 39);
+            this.pnlLibrary.Size = new System.Drawing.Size(584, 31);
             this.pnlLibrary.TabIndex = 20;
             // 
             // cbbLibrary
@@ -262,39 +278,52 @@
             this.cbbLibrary.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbbLibrary.FormattingEnabled = true;
             this.cbbLibrary.Location = new System.Drawing.Point(0, 0);
-            this.cbbLibrary.Margin = new System.Windows.Forms.Padding(3, 3, 3, 5);
+            this.cbbLibrary.Margin = new System.Windows.Forms.Padding(2, 2, 2, 4);
             this.cbbLibrary.Name = "cbbLibrary";
-            this.cbbLibrary.Size = new System.Drawing.Size(741, 33);
+            this.cbbLibrary.Size = new System.Drawing.Size(533, 28);
             this.cbbLibrary.TabIndex = 1;
             // 
             // btnReloadWebResources
             // 
             this.btnReloadWebResources.Dock = System.Windows.Forms.DockStyle.Right;
             this.btnReloadWebResources.Image = global::MsCrmTools.ScriptsFinder.Properties.Resources.arrow_refresh;
-            this.btnReloadWebResources.Location = new System.Drawing.Point(741, 0);
+            this.btnReloadWebResources.Location = new System.Drawing.Point(533, 0);
+            this.btnReloadWebResources.Margin = new System.Windows.Forms.Padding(2);
             this.btnReloadWebResources.Name = "btnReloadWebResources";
-            this.btnReloadWebResources.Size = new System.Drawing.Size(39, 39);
+            this.btnReloadWebResources.Size = new System.Drawing.Size(29, 31);
             this.btnReloadWebResources.TabIndex = 0;
             this.btnReloadWebResources.UseVisualStyleBackColor = true;
             this.btnReloadWebResources.Click += new System.EventHandler(this.btnReloadWebResources_Click);
+            // 
+            // chkLoadAlsoManagedWebresources
+            // 
+            this.chkLoadAlsoManagedWebresources.AutoSize = true;
+            this.chkLoadAlsoManagedWebresources.Dock = System.Windows.Forms.DockStyle.Right;
+            this.chkLoadAlsoManagedWebresources.Location = new System.Drawing.Point(562, 0);
+            this.chkLoadAlsoManagedWebresources.Name = "chkLoadAlsoManagedWebresources";
+            this.chkLoadAlsoManagedWebresources.Size = new System.Drawing.Size(22, 31);
+            this.chkLoadAlsoManagedWebresources.TabIndex = 3;
+            this.chkLoadAlsoManagedWebresources.UseVisualStyleBackColor = true;
             // 
             // lblLibrary
             // 
             this.lblLibrary.AutoSize = true;
             this.lblLibrary.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblLibrary.Location = new System.Drawing.Point(10, 403);
+            this.lblLibrary.Location = new System.Drawing.Point(8, 330);
+            this.lblLibrary.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblLibrary.Name = "lblLibrary";
-            this.lblLibrary.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblLibrary.Size = new System.Drawing.Size(78, 35);
+            this.lblLibrary.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblLibrary.Size = new System.Drawing.Size(56, 28);
             this.lblLibrary.TabIndex = 8;
             this.lblLibrary.Text = "Library";
             // 
             // txtField
             // 
             this.txtField.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtField.Location = new System.Drawing.Point(10, 372);
+            this.txtField.Location = new System.Drawing.Point(8, 304);
+            this.txtField.Margin = new System.Windows.Forms.Padding(2);
             this.txtField.Name = "txtField";
-            this.txtField.Size = new System.Drawing.Size(780, 31);
+            this.txtField.Size = new System.Drawing.Size(584, 26);
             this.txtField.TabIndex = 19;
             this.txtField.Visible = false;
             // 
@@ -302,10 +331,11 @@
             // 
             this.lblField.AutoSize = true;
             this.lblField.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblField.Location = new System.Drawing.Point(10, 337);
+            this.lblField.Location = new System.Drawing.Point(8, 276);
+            this.lblField.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblField.Name = "lblField";
-            this.lblField.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblField.Size = new System.Drawing.Size(59, 35);
+            this.lblField.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblField.Size = new System.Drawing.Size(43, 28);
             this.lblField.TabIndex = 18;
             this.lblField.Text = "Field";
             this.lblField.Visible = false;
@@ -315,9 +345,10 @@
             this.cbbEvent.Dock = System.Windows.Forms.DockStyle.Top;
             this.cbbEvent.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbbEvent.FormattingEnabled = true;
-            this.cbbEvent.Location = new System.Drawing.Point(10, 304);
+            this.cbbEvent.Location = new System.Drawing.Point(8, 248);
+            this.cbbEvent.Margin = new System.Windows.Forms.Padding(2);
             this.cbbEvent.Name = "cbbEvent";
-            this.cbbEvent.Size = new System.Drawing.Size(780, 33);
+            this.cbbEvent.Size = new System.Drawing.Size(584, 28);
             this.cbbEvent.TabIndex = 7;
             this.cbbEvent.SelectedIndexChanged += new System.EventHandler(this.cbbEvent_SelectedIndexChanged);
             // 
@@ -325,10 +356,11 @@
             // 
             this.lblEvent.AutoSize = true;
             this.lblEvent.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblEvent.Location = new System.Drawing.Point(10, 269);
+            this.lblEvent.Location = new System.Drawing.Point(8, 220);
+            this.lblEvent.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblEvent.Name = "lblEvent";
-            this.lblEvent.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblEvent.Size = new System.Drawing.Size(67, 35);
+            this.lblEvent.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblEvent.Size = new System.Drawing.Size(50, 28);
             this.lblEvent.TabIndex = 6;
             this.lblEvent.Text = "Event";
             // 
@@ -337,9 +369,10 @@
             this.cbbControl.Dock = System.Windows.Forms.DockStyle.Top;
             this.cbbControl.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbbControl.FormattingEnabled = true;
-            this.cbbControl.Location = new System.Drawing.Point(10, 236);
+            this.cbbControl.Location = new System.Drawing.Point(8, 192);
+            this.cbbControl.Margin = new System.Windows.Forms.Padding(2);
             this.cbbControl.Name = "cbbControl";
-            this.cbbControl.Size = new System.Drawing.Size(780, 33);
+            this.cbbControl.Size = new System.Drawing.Size(584, 28);
             this.cbbControl.TabIndex = 5;
             this.cbbControl.SelectedIndexChanged += new System.EventHandler(this.cbbControl_SelectedIndexChanged);
             // 
@@ -347,10 +380,11 @@
             // 
             this.lblControl.AutoSize = true;
             this.lblControl.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblControl.Location = new System.Drawing.Point(10, 201);
+            this.lblControl.Location = new System.Drawing.Point(8, 164);
+            this.lblControl.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblControl.Name = "lblControl";
-            this.lblControl.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblControl.Size = new System.Drawing.Size(81, 35);
+            this.lblControl.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblControl.Size = new System.Drawing.Size(60, 28);
             this.lblControl.TabIndex = 4;
             this.lblControl.Text = "Control";
             // 
@@ -359,9 +393,10 @@
             this.cbbUiItems.Dock = System.Windows.Forms.DockStyle.Top;
             this.cbbUiItems.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbbUiItems.FormattingEnabled = true;
-            this.cbbUiItems.Location = new System.Drawing.Point(10, 168);
+            this.cbbUiItems.Location = new System.Drawing.Point(8, 136);
+            this.cbbUiItems.Margin = new System.Windows.Forms.Padding(2);
             this.cbbUiItems.Name = "cbbUiItems";
-            this.cbbUiItems.Size = new System.Drawing.Size(780, 33);
+            this.cbbUiItems.Size = new System.Drawing.Size(584, 28);
             this.cbbUiItems.TabIndex = 3;
             this.cbbUiItems.SelectedIndexChanged += new System.EventHandler(this.cbbForm_SelectedIndexChanged);
             // 
@@ -369,10 +404,11 @@
             // 
             this.lblUiItem.AutoSize = true;
             this.lblUiItem.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblUiItem.Location = new System.Drawing.Point(10, 133);
+            this.lblUiItem.Location = new System.Drawing.Point(8, 108);
+            this.lblUiItem.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblUiItem.Name = "lblUiItem";
-            this.lblUiItem.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblUiItem.Size = new System.Drawing.Size(78, 35);
+            this.lblUiItem.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblUiItem.Size = new System.Drawing.Size(60, 28);
             this.lblUiItem.TabIndex = 2;
             this.lblUiItem.Text = "UI item";
             // 
@@ -381,9 +417,10 @@
             this.cbbEntity.Dock = System.Windows.Forms.DockStyle.Top;
             this.cbbEntity.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbbEntity.FormattingEnabled = true;
-            this.cbbEntity.Location = new System.Drawing.Point(10, 100);
+            this.cbbEntity.Location = new System.Drawing.Point(8, 80);
+            this.cbbEntity.Margin = new System.Windows.Forms.Padding(2);
             this.cbbEntity.Name = "cbbEntity";
-            this.cbbEntity.Size = new System.Drawing.Size(780, 33);
+            this.cbbEntity.Size = new System.Drawing.Size(584, 28);
             this.cbbEntity.TabIndex = 1;
             this.cbbEntity.SelectedIndexChanged += new System.EventHandler(this.cbbEntity_SelectedIndexChanged);
             // 
@@ -391,10 +428,11 @@
             // 
             this.lblEntity.AutoSize = true;
             this.lblEntity.Dock = System.Windows.Forms.DockStyle.Top;
-            this.lblEntity.Location = new System.Drawing.Point(10, 65);
+            this.lblEntity.Location = new System.Drawing.Point(8, 52);
+            this.lblEntity.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblEntity.Name = "lblEntity";
-            this.lblEntity.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-            this.lblEntity.Size = new System.Drawing.Size(66, 35);
+            this.lblEntity.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
+            this.lblEntity.Size = new System.Drawing.Size(49, 28);
             this.lblEntity.TabIndex = 0;
             this.lblEntity.Text = "Entity";
             // 
@@ -404,17 +442,19 @@
             this.pnlAction.Controls.Add(this.rdbRegisterEvent);
             this.pnlAction.Controls.Add(this.label1);
             this.pnlAction.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlAction.Location = new System.Drawing.Point(10, 10);
+            this.pnlAction.Location = new System.Drawing.Point(8, 8);
+            this.pnlAction.Margin = new System.Windows.Forms.Padding(2);
             this.pnlAction.Name = "pnlAction";
-            this.pnlAction.Size = new System.Drawing.Size(780, 55);
+            this.pnlAction.Size = new System.Drawing.Size(584, 44);
             this.pnlAction.TabIndex = 21;
             // 
             // rdbRegisterLibrary
             // 
             this.rdbRegisterLibrary.Dock = System.Windows.Forms.DockStyle.Left;
-            this.rdbRegisterLibrary.Location = new System.Drawing.Point(250, 0);
+            this.rdbRegisterLibrary.Location = new System.Drawing.Point(187, 0);
+            this.rdbRegisterLibrary.Margin = new System.Windows.Forms.Padding(2);
             this.rdbRegisterLibrary.Name = "rdbRegisterLibrary";
-            this.rdbRegisterLibrary.Size = new System.Drawing.Size(150, 55);
+            this.rdbRegisterLibrary.Size = new System.Drawing.Size(112, 44);
             this.rdbRegisterLibrary.TabIndex = 3;
             this.rdbRegisterLibrary.Text = "A Library";
             this.rdbRegisterLibrary.UseVisualStyleBackColor = true;
@@ -423,9 +463,10 @@
             // 
             this.rdbRegisterEvent.Checked = true;
             this.rdbRegisterEvent.Dock = System.Windows.Forms.DockStyle.Left;
-            this.rdbRegisterEvent.Location = new System.Drawing.Point(100, 0);
+            this.rdbRegisterEvent.Location = new System.Drawing.Point(75, 0);
+            this.rdbRegisterEvent.Margin = new System.Windows.Forms.Padding(2);
             this.rdbRegisterEvent.Name = "rdbRegisterEvent";
-            this.rdbRegisterEvent.Size = new System.Drawing.Size(150, 55);
+            this.rdbRegisterEvent.Size = new System.Drawing.Size(112, 44);
             this.rdbRegisterEvent.TabIndex = 2;
             this.rdbRegisterEvent.TabStop = true;
             this.rdbRegisterEvent.Text = "An Event";
@@ -436,20 +477,22 @@
             // 
             this.label1.Dock = System.Windows.Forms.DockStyle.Left;
             this.label1.Location = new System.Drawing.Point(0, 0);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(100, 55);
+            this.label1.Size = new System.Drawing.Size(75, 44);
             this.label1.TabIndex = 0;
             this.label1.Text = "Register";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // CreateEventDialog
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 1029);
+            this.ClientSize = new System.Drawing.Size(600, 823);
             this.Controls.Add(this.pnlMain);
             this.Controls.Add(this.pnlFooter);
             this.Controls.Add(this.pnlHeader);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "CreateEventDialog";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
@@ -461,6 +504,7 @@
             this.pnlMain.ResumeLayout(false);
             this.pnlMain.PerformLayout();
             this.pnlLibrary.ResumeLayout(false);
+            this.pnlLibrary.PerformLayout();
             this.pnlAction.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -501,5 +545,6 @@
         private System.Windows.Forms.RadioButton rdbRegisterLibrary;
         private System.Windows.Forms.RadioButton rdbRegisterEvent;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.CheckBox chkLoadAlsoManagedWebresources;
     }
 }

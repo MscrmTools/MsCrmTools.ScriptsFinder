@@ -33,13 +33,13 @@ namespace MsCrmTools.ScriptsFinder
         public int UserLcid { get; private set; }
         public List<Entity> Views { get; } = new List<Entity>();
 
-        public void Find(List<Entity> solutions, Version crmVersion)
+        public void Find(List<Entity> solutions, bool loadManagedEntities, Version crmVersion)
         {
             _worker.ReportProgress(0, "Loading User language...");
             GetCurrentUserLcid();
 
             _worker.ReportProgress(0, "Loading Entities metadata...");
-            _emds = GetEntities(solutions);
+            _emds = GetEntities(solutions, loadManagedEntities);
             Metadata = _emds.Where(x => x.DisplayName.UserLocalizedLabel != null).ToList();
 
             _worker.ReportProgress(0, "Loading Forms Scripts...");
@@ -156,7 +156,7 @@ namespace MsCrmTools.ScriptsFinder
             UserLcid = userSettings.GetAttributeValue<int>("uilanguageid");
         }
 
-        private List<EntityMetadata> GetEntities(List<Entity> solutions)
+        private List<EntityMetadata> GetEntities(List<Entity> solutions, bool loadManagedEntities)
         {
             if (solutions.Count > 0)
             {
@@ -226,7 +226,6 @@ namespace MsCrmTools.ScriptsFinder
                         Conditions =
                         {
                             new MetadataConditionExpression("IsCustomizable", MetadataConditionOperator.Equals, true),
-                            new MetadataConditionExpression("IsManaged", MetadataConditionOperator.Equals, false),
                         }
                     },
                     Properties = new MetadataPropertiesExpression
@@ -244,6 +243,12 @@ namespace MsCrmTools.ScriptsFinder
                         }
                     }
                 };
+
+                if (!loadManagedEntities)
+                {
+                    entityQueryExpression.Criteria.Conditions.Add(
+                        new MetadataConditionExpression("IsManaged", MetadataConditionOperator.Equals, false));
+                }
 
                 RetrieveMetadataChangesRequest retrieveMetadataChangesRequest = new RetrieveMetadataChangesRequest
                 {

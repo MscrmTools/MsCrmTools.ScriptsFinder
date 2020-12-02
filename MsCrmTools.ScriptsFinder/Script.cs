@@ -187,7 +187,9 @@ namespace MsCrmTools.ScriptsFinder
                     if (Action == ScriptAction.Delete)
                     {
                         var handlersNode = handlerNode.ParentNode;
-                        var eventNode = handlersNode.ParentNode;
+                        var eventNode = handlersNode?.ParentNode;
+                        if (eventNode == null) return;
+
                         var eventsNode = eventNode.ParentNode;
 
                         if (handlersNode.ChildNodes.Count > 1)
@@ -196,12 +198,12 @@ namespace MsCrmTools.ScriptsFinder
                         }
                         else
                         {
-                            eventNode.ParentNode.RemoveChild(eventNode);
+                            eventsNode?.RemoveChild(eventNode);
                         }
 
-                        if (eventsNode.ChildNodes.Count == 0)
+                        if (eventsNode?.ChildNodes.Count == 0)
                         {
-                            eventsNode.ParentNode.RemoveChild(eventsNode);
+                            eventsNode.ParentNode?.RemoveChild(eventsNode);
                         }
                     }
                     else if (Action == ScriptAction.Update)
@@ -258,12 +260,12 @@ namespace MsCrmTools.ScriptsFinder
                                 if (node == null) continue;
 
                                 nodes.Add(node);
-                                parentNode.RemoveChild(node);
+                                parentNode?.RemoveChild(node);
                             }
 
                             foreach (var node in nodes)
                             {
-                                parentNode.AppendChild(node);
+                                parentNode?.AppendChild(node);
                             }
                         }
                     }
@@ -311,22 +313,22 @@ namespace MsCrmTools.ScriptsFinder
                                 if (tempNode == null) continue;
 
                                 tempNodes.Add(tempNode);
-                                parentNode.RemoveChild(tempNode);
+                                parentNode?.RemoveChild(tempNode);
                             }
 
                             foreach (var tempNode in tempNodes)
                             {
-                                parentNode.AppendChild(tempNode);
+                                parentNode?.AppendChild(tempNode);
                             }
                         }
                     }
                     else if (Action == ScriptAction.Delete)
                     {
                         var parentNode = node.ParentNode;
-                        parentNode.RemoveChild(node);
-                        if (parentNode.ChildNodes.Count == 0)
+                        parentNode?.RemoveChild(node);
+                        if (parentNode?.ChildNodes.Count == 0)
                         {
-                            parentNode.ParentNode.RemoveChild(parentNode);
+                            parentNode?.ParentNode?.RemoveChild(parentNode);
                         }
                     }
                 }
@@ -397,21 +399,21 @@ namespace MsCrmTools.ScriptsFinder
                     if (Action == ScriptAction.Delete)
                     {
                         var handlersNode = handlerNode.ParentNode;
-                        var eventNode = handlersNode.ParentNode;
-                        var eventsNode = eventNode.ParentNode;
+                        var eventNode = handlersNode?.ParentNode;
+                        var eventsNode = eventNode?.ParentNode;
 
-                        if (handlersNode.ChildNodes.Count > 1)
+                        if (handlersNode?.ChildNodes.Count > 1)
                         {
                             handlersNode.RemoveChild(handlerNode);
                         }
                         else
                         {
-                            eventNode.ParentNode.RemoveChild(eventNode);
+                            eventsNode?.RemoveChild(eventNode);
                         }
 
-                        if (eventsNode.ChildNodes.Count == 0)
+                        if (eventsNode?.ChildNodes.Count == 0)
                         {
-                            eventsNode.ParentNode.RemoveChild(eventsNode);
+                            eventsNode?.ParentNode?.RemoveChild(eventsNode);
                         }
                     }
                     else if (Action == ScriptAction.Update)
@@ -461,12 +463,12 @@ namespace MsCrmTools.ScriptsFinder
                                 if (node == null) continue;
 
                                 nodes.Add(node);
-                                parentNode.RemoveChild(node);
+                                parentNode?.RemoveChild(node);
                             }
 
                             foreach (var node in nodes)
                             {
-                                parentNode.AppendChild(node);
+                                parentNode?.AppendChild(node);
                             }
                         }
                     }
@@ -516,29 +518,29 @@ namespace MsCrmTools.ScriptsFinder
                                 if (tempNode == null) continue;
 
                                 tempNodes.Add(tempNode);
-                                parentNode.RemoveChild(tempNode);
+                                parentNode?.RemoveChild(tempNode);
                             }
 
                             foreach (var tempNode in tempNodes)
                             {
-                                parentNode.AppendChild(tempNode);
+                                parentNode?.AppendChild(tempNode);
                             }
                         }
                     }
                     else if (Action == ScriptAction.Delete)
                     {
                         var parentNode = node.ParentNode;
-                        parentNode.RemoveChild(node);
-                        if (parentNode.ChildNodes.Count == 0)
+                        parentNode?.RemoveChild(node);
+                        if (parentNode?.ChildNodes.Count == 0)
                         {
-                            parentNode.ParentNode.RemoveChild(parentNode);
+                            parentNode?.ParentNode?.RemoveChild(parentNode);
                         }
                     }
                 }
             }
             else if (Type == "Grid Icon")
             {
-                var node = doc.DocumentElement.SelectSingleNode("row/cell[@name='" + AttributeLogicalName + "']");
+                var node = doc.DocumentElement?.SelectSingleNode("row/cell[@name='" + AttributeLogicalName + "']");
                 if (node == null)
                 {
                     throw new Exception($"Unable to find cell node for attribute {AttributeLogicalName}");

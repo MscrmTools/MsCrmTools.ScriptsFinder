@@ -36,6 +36,9 @@ namespace MsCrmTools.ScriptsFinder.Forms
                 cbbLibrary.Items.AddRange(_finder.Webresources.Entities.Select(r => r.GetAttributeValue<string>("name")).Cast<object>().ToArray());
                 cbbLibrary.SelectedIndex = 0;
             }
+
+            var tt = new ToolTip();
+            tt.SetToolTip(chkLoadAlsoManagedWebresources, "Load also managed web resources");
         }
 
         public List<Script> CreatedScripts { get; } = new List<Script>();
@@ -44,11 +47,12 @@ namespace MsCrmTools.ScriptsFinder.Forms
         {
             Enabled = false;
             cbbLibrary.Items.Clear();
+            var loadManaged = chkLoadAlsoManagedWebresources.Checked;
 
             var bw = new BackgroundWorker();
             bw.DoWork += (s, evt) =>
             {
-                ScriptsFinder.LoadWebResources(_finder, _service);
+                ScriptsFinder.LoadWebResources(_finder, loadManaged, _service);
             };
             bw.RunWorkerCompleted += (s, evt) =>
             {

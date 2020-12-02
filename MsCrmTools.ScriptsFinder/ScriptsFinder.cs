@@ -26,6 +26,7 @@ namespace MsCrmTools.ScriptsFinder
         private List<EntityMetadata> _metadata;
         private int _userLcid;
         private List<Entity> _views;
+        private bool loadManagedEntities = false;
         public string HelpUrl => "https://github.com/MscrmTools/MsCrmTools.ScriptsFinder/wiki";
         public string RepositoryName => "MsCrmTools.ScriptsFinder";
         public string UserName => "MscrmTools";
@@ -36,31 +37,39 @@ namespace MsCrmTools.ScriptsFinder
         public ScriptsFinder()
         {
             InitializeComponent();
+
+            var tt = new ToolTip();
+            tt.SetToolTip(chkLoadAlsoManagedWebresources, "Load also managed web resources");
         }
 
         #endregion Constructor
 
-        public static void LoadWebResources(ScriptsFinder finder, IOrganizationService service)
+        public static void LoadWebResources(ScriptsFinder finder, bool loadAlsoManaged, IOrganizationService service)
         {
-            finder.Webresources = service.RetrieveMultiple(
-                new QueryExpression("webresource")
+            var query = new QueryExpression("webresource")
+            {
+                NoLock = true,
+                ColumnSet = new ColumnSet("name"),
+                Criteria = new FilterExpression
                 {
-                    NoLock = true,
-                    ColumnSet = new ColumnSet("name"),
-                    Criteria = new FilterExpression
+                    Conditions =
                     {
-                        Conditions =
-                        {
-                            new ConditionExpression("webresourcetype", ConditionOperator.Equal, 3),
-                            new ConditionExpression("ismanaged", ConditionOperator.Equal, false),
-                            new ConditionExpression("name", ConditionOperator.DoesNotBeginWith, "cc_"),
-                        }
-                    },
-                    Orders =
-                    {
-                        new OrderExpression("name", OrderType.Ascending)
+                        new ConditionExpression("webresourcetype", ConditionOperator.Equal, 3),
+                        new ConditionExpression("name", ConditionOperator.DoesNotBeginWith, "cc_"),
                     }
-                });
+                },
+                Orders =
+                {
+                    new OrderExpression("name", OrderType.Ascending)
+                }
+            };
+
+            if (!loadAlsoManaged)
+            {
+                query.Criteria.Conditions.Add(new ConditionExpression("ismanaged", ConditionOperator.Equal, false));
+            }
+
+            finder.Webresources = service.RetrieveMultiple(query);
         }
 
         public void FindScripts(bool allEntities)
@@ -97,7 +106,7 @@ namespace MsCrmTools.ScriptsFinder
                     var solutions = (List<Entity>)e.Argument;
 
                     var sManager = new ScriptsManager(Service, bw);
-                    sManager.Find(solutions, new Version(ConnectionDetail.OrganizationVersion));
+                    sManager.Find(solutions, loadManagedEntities, new Version(ConnectionDetail.OrganizationVersion));
                     _metadata = sManager.Metadata;
                     _forms = sManager.Forms;
                     _views = sManager.Views;
@@ -170,9 +179,10 @@ namespace MsCrmTools.ScriptsFinder
 
         private void btnReloadWebResources_Click(object sender, EventArgs e)
         {
+            var loadAlsoManaged = chkLoadAlsoManagedWebresources.Checked;
             Enabled = false;
             var bw = new BackgroundWorker();
-            bw.DoWork += (s, evt) => { LoadWebResources(this, Service); };
+            bw.DoWork += (s, evt) => { LoadWebResources(this, loadAlsoManaged, Service); };
             bw.RunWorkerCompleted += (s, evt) =>
             {
                 Enabled = true;
@@ -393,13 +403,21 @@ namespace MsCrmTools.ScriptsFinder
             }));
         }
 
+        private void forAllEntitiesincludedManagedOnesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            loadManagedEntities = true;
+            ExecuteMethod(FindScripts, true);
+        }
+
         private void forAllEntitiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            loadManagedEntities = false;
             ExecuteMethod(FindScripts, true);
         }
 
         private void forEntitiesInSelectedSolutionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            loadManagedEntities = false;
             ExecuteMethod(FindScripts, false);
         }
 
