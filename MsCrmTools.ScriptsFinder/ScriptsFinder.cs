@@ -129,6 +129,7 @@ namespace MsCrmTools.ScriptsFinder
                         item.SubItems.Add(script.PassExecutionContext?.ToString() ?? "");
                         item.SubItems.Add(script.Parameters);
                         item.SubItems.Add(script.Enabled?.ToString() ?? "");
+                        item.SubItems.Add(script.Problem);
 
                         if (script.HasProblem)
                         {

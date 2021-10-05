@@ -59,6 +59,7 @@ namespace MsCrmTools.ScriptsFinder
         public string Type { get; set; }
         public Entity UiItem { get; set; }
         public string UpdateErrorMessage { get; set; }
+        public string Problem { get; internal set; }
 
         #endregion Properties
 

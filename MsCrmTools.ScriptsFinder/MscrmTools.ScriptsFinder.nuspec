@@ -11,6 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>List all client events defined in Dynamics CRM/365 organization</description>
     <summary>List all client events defined in Dynamics CRM/365 organization</summary>
+    <releaseNotes>Report issues when control is not found based on event information</releaseNotes>
     <copyright>Copyright 2017 MscrmTools</copyright>
     <tags> XrmToolBox Plugin ScriptsFinder </tags>
     <dependencies>

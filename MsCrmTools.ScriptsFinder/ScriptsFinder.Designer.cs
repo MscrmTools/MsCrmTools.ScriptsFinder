@@ -98,6 +98,7 @@ namespace MsCrmTools.ScriptsFinder
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader12 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader15 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader11 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.actionImageList = new System.Windows.Forms.ImageList(this.components);
@@ -754,7 +755,9 @@ namespace MsCrmTools.ScriptsFinder
             this.columnHeader6,
             this.columnHeader12,
             this.columnHeader11,
-            this.columnHeader10});
+            this.columnHeader10,
+            this.columnHeader15
+            });
             this.lvScripts.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lvScripts.FullRowSelect = true;
             this.lvScripts.HideSelection = false;
@@ -827,6 +830,11 @@ namespace MsCrmTools.ScriptsFinder
             // columnHeader12
             // 
             this.columnHeader12.Text = "Pass execution context";
+             // 
+            // columnHeader12
+            // 
+            this.columnHeader15.Text = "Problem";
+            this.columnHeader15.Width = 150;
             // 
             // columnHeader11
             // 
@@ -1318,6 +1326,7 @@ namespace MsCrmTools.ScriptsFinder
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private System.Windows.Forms.ColumnHeader columnHeader6;
         private System.Windows.Forms.ColumnHeader columnHeader12;
+        private System.Windows.Forms.ColumnHeader columnHeader15;
         private System.Windows.Forms.ColumnHeader columnHeader11;
         private System.Windows.Forms.ColumnHeader columnHeader10;
         private System.Windows.Forms.TableLayoutPanel tlpFilter;

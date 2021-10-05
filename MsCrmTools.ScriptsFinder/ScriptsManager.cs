@@ -605,10 +605,15 @@ namespace MsCrmTools.ScriptsFinder
                                 script.Attribute = eventNode.Attributes["attribute"]?.Value ?? "N/A";
                                 script.AttributeLogicalName = eventNode.Attributes["attribute"]?.Value ?? "N/A";
                                 script.HasProblem = true;
+                                script.Problem = $"Cannot find a control for attribute {eventNode.Attributes["attribute"]?.Value}";
                             }
                             else
                             {
                                 XmlNode node = doc.SelectSingleNode("//control[@id='" + eventNode.Attributes["control"].Value + "']");
+                                if (node == null)
+                                {
+                                    throw new Exception($"Unable to find control with id : {eventNode.Attributes["control"].Value}");
+                                }
                                 XmlNode targetEntityNode = node.SelectSingleNode("parameters/TargetEntityType");
 
                                 if (targetEntityNode == null) continue;
@@ -622,17 +627,24 @@ namespace MsCrmTools.ScriptsFinder
                             if (eventNode.Attributes["control"] != null)
                             {
                                 var control = eventNode.Attributes["control"].Value;
+                                script.Type = "Subgrid event";
+                                script.AttributeLogicalName = $"{control}:{script.AttributeLogicalName}";
 
                                 XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
+                                if (node == null)
+                                {
+                                    script.HasProblem = true;
+                                    script.Problem = $"Control '{control}' is not present anymore on the form";
+                                }
+                                else
+                                {
+                                    var labelNode = node.ParentNode.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']") ??
+                                                      node.ParentNode.SelectSingleNode("labels/label");
 
-                                var labelNode = node.ParentNode.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']") ??
-                                                node.ParentNode.SelectSingleNode("labels/label");
+                                    var label = labelNode.Attributes["description"]?.Value ?? "N/A";
 
-                                var label = labelNode.Attributes["description"]?.Value ?? "N/A";
-
-                                script.Type = "Subgrid event";
-                                script.Attribute = $"{label} / {script.Attribute}";
-                                script.AttributeLogicalName = $"{control}:{script.AttributeLogicalName}";
+                                    script.Attribute = $"{label} / {script.Attribute}";
+                                }
                             }
                         }
                         else if (eventName == "onrecordselect")
@@ -640,28 +652,45 @@ namespace MsCrmTools.ScriptsFinder
                             var control = eventNode.Attributes["control"]?.Value;
                             if (control == null) continue;
 
-                            XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
-                            var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']")?.Attributes?[
-                                    "description"]?.Value ?? "N/A";
-
                             script.Type = "Subgrid event";
-                            script.Attribute = label;
                             script.AttributeLogicalName = control;
+
+                            XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
+                            if (node == null)
+                            {
+                                script.HasProblem = true;
+                                script.Problem = $"Control '{control}' is not present anymore on the form";
+                            }
+                            else
+                            {
+                                var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']")?.Attributes?[
+                                        "description"]?.Value ?? "N/A";
+                                script.Attribute = label;
+                            }
                         }
                         else if (eventName == "onsave")
                         {
                             if (eventNode.Attributes["control"] != null)
                             {
-                                var control = eventNode.Attributes["control"].Value;
+                                var control = eventNode.Attributes["control"]?.Value;
                                 if (control == null) continue;
 
-                                XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
-                                var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']")?.Attributes?[
-                                                "description"]?.Value ?? "N/A";
-
                                 script.Type = "Subgrid event";
-                                script.Attribute = label;
                                 script.AttributeLogicalName = control;
+
+                                XmlNode node = doc.SelectSingleNode("//control[@id='" + control + "']");
+                                if (node == null)
+                                {
+                                    script.HasProblem = true;
+                                    script.Problem = $"Control '{control}' is not present anymore on the form";
+                                }
+                                else
+                                {
+                                    var label = node.ParentNode?.SelectSingleNode("labels/label[@languagecode='" + UserLcid + "']")?.Attributes?[
+                                                    "description"]?.Value ?? "N/A";
+
+                                    script.Attribute = label;
+                                }
                             }
                         }
                         else
