@@ -43,7 +43,7 @@ namespace MsCrmTools.ScriptsFinder
             Metadata = _emds.Where(x => x.DisplayName.UserLocalizedLabel != null).ToList();
 
             _worker.ReportProgress(0, "Loading Forms Scripts...");
-            LoadScripts(Metadata);
+            LoadScripts(Metadata, crmVersion.Major >= 6);
 
             _worker.ReportProgress(0, "Loading Views Icon Scripts...");
             LoadViews(Metadata);
@@ -527,11 +527,11 @@ namespace MsCrmTools.ScriptsFinder
             }
         }
 
-        private void LoadScripts(List<EntityMetadata> emds)
+        private void LoadScripts(List<EntityMetadata> emds, bool supportFormActivationState)
         {
             var query = new QueryExpression("systemform")
             {
-                ColumnSet = new ColumnSet("name", "formxml", "type", "formactivationstate", "objecttypecode"),
+                ColumnSet = new ColumnSet("name", "formxml", "type", "objecttypecode"),
                 Criteria = new FilterExpression
                 {
                     Conditions =
@@ -542,10 +542,10 @@ namespace MsCrmTools.ScriptsFinder
                 }
             };
 
-            //var qba = new QueryByAttribute("systemform");
-            //qba.Attributes.Add("objecttypecode");
-            //qba.Values.Add(emd.ObjectTypeCode ?? 0);
-            //qba.ColumnSet = new ColumnSet(true);
+            if (supportFormActivationState)
+            {
+                query.ColumnSet.AddColumn("formactivationstate");
+            }
 
             var forms = _service.RetrieveMultiple(query).Entities.ToList();
             Forms.AddRange(forms);
@@ -705,6 +705,10 @@ namespace MsCrmTools.ScriptsFinder
                             script.FormState = form.GetAttributeValue<OptionSetValue>("formactivationstate").Value == 0
                             ? "Inactive"
                             : "Active";
+                        }
+                        else
+                        {
+                            script.FormState = "N/A";
                         }
 
                         var type = form.GetAttributeValue<OptionSetValue>("type")?.Value ?? -1;

@@ -87,7 +87,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
                     UiItem = uiItem.Item,
                     ItemName = uiItem is CdsForm form ? form.Item.GetAttributeValue<string>("name") : "",
                     FormType = uiItem is CdsForm cdsForm ? cdsForm.Item.FormattedValues["type"] : "",
-                    FormState = uiItem is CdsForm item ? item.Item.FormattedValues["formactivationstate"] : "",
+                    FormState = uiItem is CdsForm item ? (item.Item.FormattedValues.Contains("formactivationstate") ? item.Item.FormattedValues["formactivationstate"] : "") : "",
                     NewLibrary = cbbLibrary.SelectedItem?.ToString() ?? cbbLibrary.Text,
                     Library = cbbLibrary.SelectedItem?.ToString() ?? cbbLibrary.Text,
                     Type = uiItem is CdsForm ? "Form Library" : "Homepage Grid Library",
@@ -110,7 +110,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
                         ? uiItem.Item.GetAttributeValue<string>("name")
                         : "",
                     FormType = uiItem is CdsForm ? uiItem.Item.FormattedValues["type"] : "",
-                    FormState = uiItem is CdsForm ? uiItem.Item.FormattedValues["formactivationstate"] : "",
+                    FormState = uiItem is CdsForm ? (uiItem.Item.FormattedValues.Contains("formactivationstate") ? uiItem.Item.FormattedValues["formactivationstate"] : "") : "",
                     Event = cbbEvent.SelectedItem.ToString().ToLower(),
                     NewLibrary = cbbLibrary.SelectedItem?.ToString() ?? cbbLibrary.Text,
                     Library = cbbLibrary.SelectedItem?.ToString() ?? cbbLibrary.Text,
@@ -190,7 +190,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
                         ItemName = uiItem is CdsForm form ? form.Item.GetAttributeValue<string>("name") : "",
                         FormType = uiItem is CdsForm cdsForm ? cdsForm.Item.FormattedValues["type"] : "",
                         FormState = uiItem is CdsForm item
-                            ? item.Item.FormattedValues["formactivationstate"]
+                            ? (uiItem.Item.FormattedValues.Contains("formactivationstate") ? uiItem.Item.FormattedValues["formactivationstate"] : "")
                             : "",
                         Type = uiItem is CdsForm ? "Form Library" : "Homepage Grid Library",
                         EntityName = eventScript.EntityName,
