@@ -43,35 +43,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
 
         public List<Script> CreatedScripts { get; } = new List<Script>();
 
-        private void btnReloadWebResources_Click(object sender, EventArgs e)
-        {
-            Enabled = false;
-            cbbLibrary.Items.Clear();
-            var loadManaged = chkLoadAlsoManagedWebresources.Checked;
-
-            var bw = new BackgroundWorker();
-            bw.DoWork += (s, evt) =>
-            {
-                ScriptsFinder.LoadWebResources(_finder, loadManaged, _service);
-            };
-            bw.RunWorkerCompleted += (s, evt) =>
-            {
-                Enabled = true;
-
-                if (evt.Error != null)
-                {
-                    MessageBox.Show(this, $@"An error occured when loading web resources: {evt.Error.Message}",
-                        @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                cbbLibrary.Items.AddRange(_finder.Webresources.Entities.Select(r => r.GetAttributeValue<string>("name")).Cast<object>().ToArray());
-                cbbLibrary.SelectedIndex = 0;
-            };
-            bw.RunWorkerAsync();
-        }
-
-        private void btnSolutionPickerValidate_Click(object sender, EventArgs e)
+        private void btnAdd_Click(object sender, EventArgs e)
         {
             var uiItem = cbbUiItems.SelectedItem as IUiUtem ?? cbbUiItems.SelectedItem as IUiUtem;
             if (uiItem == null) return;
@@ -79,9 +51,12 @@ namespace MsCrmTools.ScriptsFinder.Forms
             var logicalName = cbbEntity.SelectedItem.ToString().Split('(')[1];
             logicalName = logicalName.Substring(0, logicalName.Length - 1);
 
+            Script eventScript = null;
+            Script libraryScript = null;
+
             if (rdbRegisterLibrary.Checked)
             {
-                var eventScript = new Script
+                eventScript = new Script
                 {
                     Action = ScriptAction.Create,
                     UiItem = uiItem.Item,
@@ -102,7 +77,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
             else
             {
                 var control = (CdsFormControl)cbbControl.SelectedItem;
-                var eventScript = new Script
+                eventScript = new Script
                 {
                     Action = ScriptAction.Create,
                     UiItem = uiItem.Item,
@@ -181,7 +156,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
                 if (!uiItem.Libraries.Select(l => l?.ToLower())
                     .Contains((cbbLibrary.SelectedItem?.ToString() ?? cbbLibrary.Text).ToLower()))
                 {
-                    var libraryScript = new Script
+                    libraryScript = new Script
                     {
                         Action = ScriptAction.Create,
                         UiItem = uiItem.Item,
@@ -201,6 +176,81 @@ namespace MsCrmTools.ScriptsFinder.Forms
                     CreatedScripts.Add(libraryScript);
                 }
             }
+
+            if (libraryScript != null)
+            {
+                if (lvNewScripts.Items.Cast<ListViewItem>().Select(i => (Script)i.Tag).Any(s =>
+                       s.Type == "Form Library" && s.UiItem.Id == libraryScript.UiItem.Id && s.Library == libraryScript.Library))
+                {
+                }
+                else
+                {
+                    var item = new ListViewItem(libraryScript.Type) { Tag = libraryScript };
+                    item.SubItems.Add(libraryScript.EntityName);
+                    item.SubItems.Add(libraryScript.ItemName);
+                    item.SubItems.Add(libraryScript.Event?.ToLower());
+                    item.SubItems.Add(libraryScript.Attribute);
+                    item.SubItems.Add(libraryScript.Library);
+                    item.SubItems.Add(libraryScript.MethodCalled);
+                    item.SubItems.Add(libraryScript.PassExecutionContext?.ToString() ?? "");
+                    item.SubItems.Add(libraryScript.Parameters);
+                    item.SubItems.Add(libraryScript.Enabled?.ToString() ?? "");
+                    item.Tag = libraryScript;
+
+                    lvNewScripts.Items.Add(item);
+                }
+            }
+
+            if (eventScript != null)
+            {
+                var item = new ListViewItem(eventScript.Type) { Tag = libraryScript };
+                item.SubItems.Add(eventScript.EntityName);
+                item.SubItems.Add(eventScript.ItemName);
+                item.SubItems.Add(eventScript.Event?.ToLower());
+                item.SubItems.Add(eventScript.Attribute);
+                item.SubItems.Add(eventScript.Library);
+                item.SubItems.Add(eventScript.MethodCalled);
+                item.SubItems.Add(eventScript.PassExecutionContext?.ToString() ?? "");
+                item.SubItems.Add(eventScript.Parameters);
+                item.SubItems.Add(eventScript.Enabled?.ToString() ?? "");
+                item.Tag = eventScript;
+
+                lvNewScripts.Items.Add(item);
+            }
+        }
+
+        private void btnReloadWebResources_Click(object sender, EventArgs e)
+        {
+            Enabled = false;
+            cbbLibrary.Items.Clear();
+            var loadManaged = chkLoadAlsoManagedWebresources.Checked;
+
+            var bw = new BackgroundWorker();
+            bw.DoWork += (s, evt) =>
+            {
+                ScriptsFinder.LoadWebResources(_finder, loadManaged, _service);
+            };
+            bw.RunWorkerCompleted += (s, evt) =>
+            {
+                Enabled = true;
+
+                if (evt.Error != null)
+                {
+                    MessageBox.Show(this, $@"An error occured when loading web resources: {evt.Error.Message}",
+                        @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                cbbLibrary.Items.AddRange(_finder.Webresources.Entities.Select(r => r.GetAttributeValue<string>("name")).Cast<object>().ToArray());
+                cbbLibrary.SelectedIndex = 0;
+            };
+            bw.RunWorkerAsync();
+        }
+
+        private void btnSolutionPickerValidate_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
         private void cbbControl_SelectedIndexChanged(object sender, EventArgs e)
@@ -269,6 +319,15 @@ namespace MsCrmTools.ScriptsFinder.Forms
             rdbRegisterEvent_CheckedChanged(rdbRegisterEvent, new EventArgs());
         }
 
+        private void lvNewScripts_DoubleClick(object sender, EventArgs e)
+        {
+            var lvi = lvNewScripts.SelectedItems.Cast<ListViewItem>().FirstOrDefault();
+            if (lvi == null) return;
+
+            lvNewScripts.Items.Remove(lvi);
+            CreatedScripts.Remove((Script)lvi.Tag);
+        }
+
         private void rdbRegisterEvent_CheckedChanged(object sender, EventArgs e)
         {
             var isEvent = ((RadioButton)sender).Checked;
@@ -292,7 +351,7 @@ namespace MsCrmTools.ScriptsFinder.Forms
             lblEnabled.Visible = isEvent;
             chkEnabled.Visible = isEvent;
 
-            Height = isEvent ? 550 : 300;
+            //Height = isEvent ? 550 : 350;
         }
     }
 }

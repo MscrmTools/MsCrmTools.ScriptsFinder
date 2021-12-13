@@ -495,7 +495,8 @@ namespace MsCrmTools.ScriptsFinder
 
         private void tsbApplyChanges_Click(object sender, EventArgs e)
         {
-            var scripts = lvScripts.Items.Cast<ListViewItem>().Where(i => i.Tag is Script s && (s.Action == ScriptAction.Create || s.Action == ScriptAction.Delete || s.RequiresUpdate))
+            //lvScripts.Items.Cast<ListViewItem>()
+            var scripts = _lScripts.Where(i => i.Tag is Script s && (s.Action == ScriptAction.Create || s.Action == ScriptAction.Delete || s.RequiresUpdate))
                 .Select(i => (Script)i.Tag).ToList();
 
             int createLibrary = scripts.Count(s => (s.Type == "Form Library" || s.Type == "Homepage Grid Library") && s.Action == ScriptAction.Create);
@@ -541,7 +542,7 @@ Events:
                 {
                     foreach (var script in scripts)
                     {
-                        var lvi = lvScripts.Items.Cast<ListViewItem>().First(i => i.Tag == script);
+                        var lvi = _lScripts.First(i => i.Tag == script);
 
                         switch (script.Action)
                         {
