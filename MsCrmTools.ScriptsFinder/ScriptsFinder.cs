@@ -852,7 +852,7 @@ Events:
                         var script = (Script)item.Tag;
 
                         var line = Encoding.UTF8.GetBytes(
-                            $"\"{script.Type}\",\"{script.EntityName}\",\"{script.EntityLogicalName}\",\"{script.ItemName}\",\"{script.FormType}\",\"{script.FormState}\",\"{script.Event}\",\"{script.Attribute}\",\"{script.AttributeLogicalName}\",\"{script.Library}\",\"{script.MethodCalled}\",\"{script.Parameters?.Replace(",", " ")}\",\"{script.Enabled}\",\"{script.PassExecutionContext}\"{Environment.NewLine}");
+                            $"\"{script.Type}\",\"{script.EntityName}\",\"{script.EntityLogicalName}\",\"{script.ItemName}\",\"{script.FormType}\",\"{script.FormState}\",\"{script.Event}\",\"{script.Attribute}\",\"{script.AttributeLogicalName}\",\"{script.Library}\",\"{script.MethodCalled}\",\"{script.Parameters?.Replace(",", " ").Replace("\"", "\"\"")}\",\"{script.Enabled}\",\"{script.PassExecutionContext}\"{Environment.NewLine}");
 
                         fs.Write(line, 0, line.Length);
                     }
